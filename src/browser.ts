@@ -129,7 +129,14 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
         // authored action time. Slow commands must not shift every later click.
         const actionTime = action.atMs === undefined ? undefined : startMs + action.atMs;
         if (actionTime !== undefined) await sleep(Math.max(0, actionTime - approach - (approach ? 300 : 0) - performance.now()));
-        if (approach) { await move(page, pointer, target, approach); pointer = target; await sleep(Math.max(140, (actionTime ?? performance.now() + 140) - performance.now())); }
+        if (approach) {
+          await move(page, pointer, target, approach); pointer = target;
+          const readableHoverUntil = performance.now() + 140;
+          // Validate while hovering, then measure the dispatch boundary—not
+          // the earlier guard checks—as the action's observed start.
+          if (action.type === 'click' && (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer))) throw new Error('Click target is disabled or occluded');
+          await sleep(Math.max(0, Math.max(readableHoverUntil, actionTime ?? readableHoverUntil) - performance.now()));
+        }
         const atMs = performance.now();
         switch (action.type) {
           case 'navigate': {
@@ -140,7 +147,6 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
             await page.mouse.move(pointer.x, pointer.y); break;
           }
           case 'click': {
-            if (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer)) throw new Error('Click target is disabled or occluded');
             await page.mouse.click(pointer.x, pointer.y); break;
           }
           case 'type': {
