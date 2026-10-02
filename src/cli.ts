@@ -9,8 +9,9 @@ import { prepareDemo, generateDemo, getStatus, cleanup, submitReview, reconcile 
 import { missionDirectory, missionPath, readJson } from './store.js';
 import { planSchema } from './schemas.js';
 import type { ReviewSubmission } from './contracts.js';
+import { packageVersion } from './version.js';
 
-const help = `demo-studio v0.1.0
+const help = `demo-studio v${packageVersion}
   doctor [--narration supplied|voicebox|elevenlabs] [--skills-only]
   validate --plan examples/quickstart/plan.json
   prepare --plan PLAN [--work-dir .demo-studio] [--actor PRODUCER]

@@ -1,8 +1,10 @@
-import { mkdtempSync, symlinkSync, rmSync } from 'node:fs';
+import { mkdtempSync, symlinkSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { expect, it } from 'vitest';
+
+const packageVersion = JSON.parse(readFileSync(resolve('package.json'), 'utf8')).version as string;
 
 it('runs the installed-style command through a symlink with a different filename', () => {
   const directory = mkdtempSync(join(tmpdir(), 'demo-studio-cli-'));
@@ -11,7 +13,7 @@ it('runs the installed-style command through a symlink with a different filename
     symlinkSync(resolve('src/cli.ts'), command);
     const result = spawnSync(process.execPath, ['--import', 'tsx', command, 'help'], { encoding: 'utf8', timeout: 10_000 });
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('demo-studio v0.1.0');
+    expect(result.stdout).toContain(`demo-studio v${packageVersion}`);
     const doctor = spawnSync(process.execPath, ['--import', 'tsx', command, 'doctor', '--skills-only'], { encoding: 'utf8', timeout: 10_000 });
     expect(doctor.status).toBe(0);
     expect(JSON.parse(doctor.stdout).ready).toBe(true);

@@ -1,6 +1,6 @@
 {
   "name": "@jbjmllc/demo-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Story-first product demos: skills, browser capture, narration, rendering, and evidence-based review.",
   "type": "module",
   "license": "MIT",
@@ -33,7 +33,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "remotion": "4.0.532",
-    "zod": "3.24.2",
+    "zod": "3.25.76",
     "zod-to-json-schema": "3.24.5"
   },
   "devDependencies": {
