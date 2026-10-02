@@ -1,5 +1,11 @@
 # Plan and narration configuration
 
+Captions use a dedicated bottom band. The full browser viewport is contained at
+a constant scale above it; nothing is cropped, and captions cannot cover controls.
+The timeline records the coordinate transform for cursor auditing. Disabling
+captions restores full-frame presentation. Runtime source and package configuration
+are fingerprinted; changed implementations require new preparation.
+
 Plans are JSON files. Validate a plan before preparing a mission:
 
 ```sh

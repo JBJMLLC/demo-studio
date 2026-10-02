@@ -9,7 +9,9 @@ async function listen(server: Server) {
   if (!address || typeof address === 'string') throw new Error('Fixture failed');
   return `http://127.0.0.1:${address.port}`;
 }
-async function close(server: Server) { await new Promise<void>((done) => server.close(() => done())); }
+async function close(server: Server) {
+  await new Promise<void>((done) => { server.close(() => done()); server.closeAllConnections(); });
+}
 
 describe('configured browser origin', () => {
   for (const scenario of ['redirect', 'subresource', 'popup'] as const) {
@@ -26,9 +28,9 @@ describe('configured browser origin', () => {
       try {
         const { context, assertBoundary } = await isolatedContext(browser, insideUrl);
         const page = await context.newPage();
-        if (scenario === 'redirect') await expect(page.goto(insideUrl)).rejects.toThrow();
+        if (scenario === 'redirect') await expect(page.goto(insideUrl, { timeout: 10_000 })).rejects.toThrow();
         else {
-          await page.goto(insideUrl, { waitUntil: 'load' });
+          await page.goto(insideUrl, { waitUntil: 'load', timeout: 10_000 });
           if (scenario === 'popup') {
             const popup = page.waitForEvent('popup');
             await page.getByRole('button', { name: 'Open' }).click();
