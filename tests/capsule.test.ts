@@ -15,6 +15,12 @@ import {
   runtimeInstallerEnvironment,
   type RuntimeCapsuleDescriptor,
 } from '../src/capsule.js';
+import {
+  detectLinuxLibcIdentity,
+  runtimeCapsuleCacheName,
+  runtimeCompatibilityKeyFor,
+  runtimeCompatibilityMatches,
+} from '../src/runtime-compatibility.js';
 
 const runtimeName = '@jbjmllc/demo-studio-runtime';
 const hash = (bytes: Buffer | string) => `sha256:${createHash('sha256').update(bytes).digest('hex')}` as `sha256:${string}`;
@@ -106,6 +112,88 @@ describe('integrity-pinned runtime capsule', () => {
     expect(runtimeCompatibilityKey()).toContain(`abi${process.versions.modules || 'none'}`);
     expect(runtimeCompatibilityKey()).toContain(process.platform);
     expect(runtimeCompatibilityKey()).toContain(process.arch);
+  });
+
+  it('separates GNU and musl cache identities and prevents receipt reuse across libc families', () => {
+    const sameLinuxRuntime = { nodeMajor: '22', abi: '127', platform: 'linux', arch: 'x64' };
+    const glibc = detectLinuxLibcIdentity('2.37', ['/lib64/libc.so.6']);
+    const musl = detectLinuxLibcIdentity(undefined, ['/lib/ld-musl-x86_64.so.1']);
+    const unknown = detectLinuxLibcIdentity(undefined, ['/lib64/ld-linux-x86-64.so.2']);
+    const glibcKey = runtimeCompatibilityKeyFor({ ...sameLinuxRuntime, linuxLibc: glibc });
+    const muslKey = runtimeCompatibilityKeyFor({ ...sameLinuxRuntime, linuxLibc: musl });
+
+    expect(glibc.family).toBe('glibc');
+    expect(musl.family).toBe('musl');
+    expect(unknown.family).toBe('unknown');
+    expect(glibcKey).not.toBe(muslKey);
+    expect(glibcKey).toContain('glibc-2.37');
+    expect(muslKey).toContain('libc-musl');
+    expect(() => runtimeCompatibilityKeyFor({ ...sameLinuxRuntime, linuxLibc: unknown })).toThrow(/unknown/i);
+
+    const glibcCache = runtimeCapsuleCacheName('0.1.2', 'abc123', glibcKey);
+    const muslCache = runtimeCapsuleCacheName('0.1.2', 'abc123', muslKey);
+    expect(glibcCache).not.toBe(muslCache);
+    expect(runtimeCompatibilityMatches(glibcKey, glibcKey)).toBe(true);
+    expect(runtimeCompatibilityMatches(glibcKey, muslKey)).toBe(false);
+    expect(muslKey).not.toContain('/lib/ld-musl');
+
+    expect(runtimeCompatibilityKeyFor({ ...sameLinuxRuntime, platform: 'darwin', arch: 'arm64', linuxLibc: unknown }))
+      .toBe('node22-abi127-darwin-arm64');
+  });
+
+  it('returns a separate missing status instead of reading a failed receipt from another Linux libc cache', async () => {
+    const simulatedCache = join(root, 'linux-libc-cache-isolation');
+    const platformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+    const archDescriptor = Object.getOwnPropertyDescriptor(process, 'arch');
+    const reportSpy = vi.spyOn(process.report, 'getReport');
+
+    try {
+      Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' });
+      Object.defineProperty(process, 'arch', { configurable: true, value: 'x64' });
+      reportSpy.mockReturnValue({ header: { glibcVersionRuntime: '2.37' }, sharedObjects: ['/lib64/libc.so.6'] });
+      vi.resetModules();
+      const glibcCapsule = await import('../src/capsule.js');
+      const glibcStatus = await glibcCapsule.getRuntimeCapsuleStatus({ descriptor, cacheDirectory: simulatedCache });
+      expect(glibcStatus.status).toBe('missing');
+      expect(glibcStatus.compatibilityKey).toContain('glibc-2.37');
+
+      await mkdir(glibcStatus.cachePath, { recursive: true });
+      const timestamp = new Date().toISOString();
+      await writeFile(join(glibcStatus.cachePath, 'status.json'), JSON.stringify({
+        schemaVersion: 1,
+        descriptor,
+        compatibilityKey: glibcStatus.compatibilityKey,
+        status: 'failed',
+        attemptId: randomUUID(),
+        startedAt: timestamp,
+        updatedAt: timestamp,
+        failureStage: 'npm-install',
+        errorCode: 'install-failed',
+      }));
+      expect((await glibcCapsule.getRuntimeCapsuleStatus({ descriptor, cacheDirectory: simulatedCache })).status).toBe('failed');
+
+      reportSpy.mockReturnValue({ header: {}, sharedObjects: ['/lib/ld-musl-x86_64.so.1'] });
+      vi.resetModules();
+      const muslCapsule = await import('../src/capsule.js');
+      const muslStatus = await muslCapsule.getRuntimeCapsuleStatus({ descriptor, cacheDirectory: simulatedCache });
+      expect(muslStatus.status).toBe('missing');
+      expect(muslStatus.compatibilityKey).toContain('libc-musl');
+      expect(muslStatus.cachePath).not.toBe(glibcStatus.cachePath);
+
+      reportSpy.mockReturnValue({ header: {}, sharedObjects: ['/lib64/ld-linux-x86-64.so.2'] });
+      vi.resetModules();
+      const unknownCapsule = await import('../src/capsule.js');
+      await expect(unknownCapsule.getRuntimeCapsuleStatus({ descriptor, cacheDirectory: simulatedCache }))
+        .rejects.toMatchObject({ name: 'RuntimeCapsuleError', code: 'unsupported-libc' });
+      const storedGlibcReceipt = await readFile(join(glibcStatus.cachePath, 'status.json'), 'utf8');
+      expect(storedGlibcReceipt).not.toContain('/lib');
+      expect(storedGlibcReceipt).not.toContain('ld-musl');
+    } finally {
+      reportSpy.mockRestore();
+      vi.resetModules();
+      if (platformDescriptor) Object.defineProperty(process, 'platform', platformDescriptor);
+      if (archDescriptor) Object.defineProperty(process, 'arch', archDescriptor);
+    }
   });
 
   it('keeps acquisition location separate from the pinned runtime identity', async () => {

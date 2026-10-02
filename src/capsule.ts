@@ -8,6 +8,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gunzipSync } from 'node:zlib';
+import { detectLinuxLibcIdentity, runtimeCapsuleCacheName, runtimeCompatibilityKeyFor, runtimeCompatibilityMatches, type LinuxLibcIdentity } from './runtime-compatibility.js';
 
 export const RUNTIME_CAPSULE_PACKAGE = '@jbjmllc/demo-studio-runtime';
 
@@ -37,7 +38,7 @@ export interface RuntimeCapsuleStatus {
   runtimeEntry?: string;
   attemptId?: string;
   failureStage?: RuntimeCapsuleFailureStage;
-  errorCode?: 'install-failed' | 'integrity-mismatch' | 'invalid-receipt' | 'package-identity-mismatch' | 'unsafe-cache-path';
+  errorCode?: 'install-failed' | 'integrity-mismatch' | 'invalid-receipt' | 'package-identity-mismatch' | 'unsafe-cache-path' | 'unsupported-libc';
 }
 
 export interface RuntimeCapsuleOptions {
@@ -71,16 +72,41 @@ const packagePattern = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 const shaPattern = /^sha256:[a-f0-9]{64}$/;
 const syncFileDescriptor = promisify(fsync);
 const failureStages: RuntimeCapsuleFailureStage[] = ['lock-persistence', 'attempt-journal', 'archive-acquisition', 'npm-install', 'post-install-validation', 'completion-journal'];
+let cachedRuntimeCompatibilityKey: string | undefined;
 
 function isFailureStage(value: unknown): value is RuntimeCapsuleFailureStage {
   return typeof value === 'string' && failureStages.includes(value as RuntimeCapsuleFailureStage);
 }
 
-/** Native optional dependencies are installed per Node ABI and host platform. */
+/** Native optional dependencies are installed per Node ABI, host platform, and Linux libc family. */
 export function runtimeCompatibilityKey(): string {
+  if (cachedRuntimeCompatibilityKey) return cachedRuntimeCompatibilityKey;
   const nodeMajor = process.versions.node.split('.')[0];
   const abi = process.versions.modules || 'none';
-  return `node${nodeMajor}-abi${abi}-${process.platform}-${process.arch}`;
+  let linuxLibc: LinuxLibcIdentity | undefined;
+  if (process.platform === 'linux') {
+    let glibcVersionRuntime: unknown;
+    let sharedObjects: unknown;
+    try {
+      // Keep the report in memory and immediately reduce it to the two values
+      // used for libc selection. No report paths or other fields are retained.
+      const report = process.report.getReport() as { header?: { glibcVersionRuntime?: unknown }; sharedObjects?: unknown };
+      glibcVersionRuntime = report.header?.glibcVersionRuntime;
+      sharedObjects = report.sharedObjects;
+    } catch {
+      // An unavailable diagnostic signal is not proof of either libc family.
+    }
+    linuxLibc = detectLinuxLibcIdentity(glibcVersionRuntime, sharedObjects);
+    if (linuxLibc.family === 'unknown') {
+      fail('unsupported-libc', 'Linux libc could not be identified from Node runtime diagnostics; capsule installation and cache reuse are disabled on this host.');
+    }
+  }
+  try {
+    cachedRuntimeCompatibilityKey = runtimeCompatibilityKeyFor({ nodeMajor, abi, platform: process.platform, arch: process.arch, linuxLibc });
+    return cachedRuntimeCompatibilityKey;
+  } catch {
+    fail('unsupported-libc', 'Linux libc could not be identified from Node runtime diagnostics; capsule installation and cache reuse are disabled on this host.');
+  }
 }
 
 function fail(code: NonNullable<RuntimeCapsuleStatus['errorCode']>, message: string): never {
@@ -130,7 +156,7 @@ function defaultCacheDirectory(): string {
   const configured = process.env.DEMO_STUDIO_RUNTIME_CACHE_DIR;
   return resolve(configured || join(homedir(), '.cache', 'demo-studio', 'runtime-capsules'));
 }
-function capsuleName(descriptor: RuntimeCapsuleDescriptor): string { return `${descriptor.version}-${digestFrom(descriptor)}-${runtimeCompatibilityKey()}`; }
+function capsuleName(descriptor: RuntimeCapsuleDescriptor): string { return runtimeCapsuleCacheName(descriptor.version, digestFrom(descriptor), runtimeCompatibilityKey()); }
 function paths(options: RuntimeCapsuleOptions) {
   const descriptor = validateDescriptor(options.descriptor ?? getRuntimeCapsuleDescriptor());
   const cacheDirectory = resolve(options.cacheDirectory ?? defaultCacheDirectory());
@@ -177,7 +203,7 @@ function receiptIsValid(value: unknown, descriptor: RuntimeCapsuleDescriptor): v
     && receipt.descriptor?.version === descriptor.version
     && receipt.descriptor?.sha256 === descriptor.sha256
     && JSON.stringify(receipt.descriptor?.files) === JSON.stringify(descriptor.files)
-    && receipt.compatibilityKey === runtimeCompatibilityKey()
+    && runtimeCompatibilityMatches(receipt.compatibilityKey, runtimeCompatibilityKey())
     && ['ready', 'installing', 'unknown-after-timeout', 'failed'].includes(receipt.status || '')
     && typeof receipt.attemptId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(receipt.attemptId)
     && validTime(receipt.startedAt) && validTime(receipt.updatedAt)
@@ -276,7 +302,7 @@ async function readInstallLock(path: string, descriptor: RuntimeCapsuleDescripto
   if (Object.keys(lock).some((key) => !['schemaVersion', 'descriptor', 'compatibilityKey', 'attemptId', 'pid', 'startedAt'].includes(key))
     || lock.schemaVersion !== 1 || lock.descriptor?.packageName !== descriptor.packageName || lock.descriptor.version !== descriptor.version
     || lock.descriptor.sha256 !== descriptor.sha256 || JSON.stringify(lock.descriptor.files) !== JSON.stringify(descriptor.files)
-    || lock.compatibilityKey !== runtimeCompatibilityKey()
+    || !runtimeCompatibilityMatches(lock.compatibilityKey, runtimeCompatibilityKey())
     || typeof lock.attemptId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(lock.attemptId)
     || !Number.isSafeInteger(lock.pid) || !validTime(lock.startedAt)) fail('invalid-receipt', 'The runtime installer lock does not match the pinned identity.');
   return { attemptId: lock.attemptId as string, pid: lock.pid as number, startedAt: lock.startedAt as string };

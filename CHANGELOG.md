@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.1.2)
+## 0.1.2
 
 - Add an integrity-pinned conventional runtime capsule and PnP-safe host exports/stdio launcher, with explicit install and retry reconciliation.
 - Preserve conventional runtime adapter APIs behind `@jbjmllc/demo-studio/runtime`; do not load them in-process under PnP.
