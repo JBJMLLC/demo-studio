@@ -1,0 +1,57 @@
+{
+  "$ref": "#/definitions/render",
+  "definitions": {
+    "render": {
+      "type": "object",
+      "properties": {
+        "videoPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "posterPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "durationMs": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "sampledFrames": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "timelinePath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "playbackRate": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "hasAudio": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "videoPath",
+        "posterPath",
+        "durationMs",
+        "sampledFrames",
+        "timelinePath",
+        "sha256",
+        "playbackRate",
+        "hasAudio"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

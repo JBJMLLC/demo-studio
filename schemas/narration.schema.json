@@ -1,0 +1,60 @@
+{
+  "$ref": "#/definitions/narration",
+  "definitions": {
+    "narration": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "supplied",
+            "voicebox",
+            "elevenlabs"
+          ]
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sceneId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "durationMs": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              },
+              "textSha256": {
+                "$ref": "#/definitions/narration/properties/tracks/items/properties/sha256"
+              },
+              "alignment": {}
+            },
+            "required": [
+              "sceneId",
+              "path",
+              "durationMs",
+              "sha256",
+              "textSha256"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "provider",
+        "tracks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

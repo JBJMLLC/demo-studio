@@ -1,0 +1,27 @@
+{
+  "name": "demo-studio",
+  "owner": {
+    "name": "JBJMLLC"
+  },
+  "metadata": {
+    "description": "Composable skills and local tools for grounded product walkthroughs.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "demo-studio",
+      "source": ".",
+      "description": "Story-first brief, storyboard, narration, review, browser capture, and audit skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "JBJMLLC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "product-demo",
+        "browser-recording",
+        "narration"
+      ]
+    }
+  ]
+}

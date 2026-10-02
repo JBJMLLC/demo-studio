@@ -1,0 +1,269 @@
+{
+  "$ref": "#/definitions/capture",
+  "definitions": {
+    "capture": {
+      "type": "object",
+      "properties": {
+        "recordings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "width": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "fps": {
+          "type": "number",
+          "const": 30
+        },
+        "durationMs": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "clock": {
+          "type": "object",
+          "properties": {
+            "originMs": {
+              "type": "number"
+            },
+            "verified": {
+              "type": "boolean"
+            },
+            "uncertaintyMs": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "recordingSha256": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "originMs",
+            "verified",
+            "recordingSha256"
+          ],
+          "additionalProperties": false
+        },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "startMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "endMs": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "beforeFrame": {
+                "type": "string",
+                "minLength": 1
+              },
+              "afterFrame": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cursorStart": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cursorEnd": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/capture/properties/scenes/items/properties/cursorStart/anyOf/0"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "audio": {
+                "type": "object",
+                "properties": {
+                  "startMs": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "endMs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "sourceDurationMs": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "sha256": {
+                    "$ref": "#/definitions/capture/properties/clock/properties/recordingSha256"
+                  },
+                  "playbackRate": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "startMs",
+                  "endMs",
+                  "sourceDurationMs",
+                  "sha256",
+                  "playbackRate"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "startMs",
+              "endMs",
+              "beforeFrame",
+              "afterFrame",
+              "cursorStart",
+              "cursorEnd"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sceneId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "navigate",
+                  "click",
+                  "type",
+                  "drag",
+                  "wait",
+                  "press"
+                ]
+              },
+              "atMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "endMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "cursor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/capture/properties/scenes/items/properties/cursorStart/anyOf/0"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "spokenAnchor": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "sceneId",
+              "type",
+              "atMs",
+              "cursor"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sceneId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "selector": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "visible",
+                  "text"
+                ]
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "observedValueSha256": {
+                "$ref": "#/definitions/capture/properties/clock/properties/recordingSha256"
+              }
+            },
+            "required": [
+              "sceneId",
+              "selector",
+              "kind",
+              "passed"
+            ],
+            "additionalProperties": false
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "recordings",
+        "width",
+        "height",
+        "fps",
+        "durationMs",
+        "clock",
+        "scenes",
+        "events"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

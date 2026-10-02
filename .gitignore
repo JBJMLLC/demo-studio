@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.demo-studio/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+coverage/
+*.log
+*.tgz
+.DS_Store

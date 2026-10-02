@@ -1,0 +1,276 @@
+{
+  "$ref": "#/definitions/mission",
+  "definitions": {
+    "mission": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "missionId": {
+          "type": "string",
+          "pattern": "^demo-[a-f0-9]{24}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "preparing",
+            "prepared",
+            "running",
+            "awaiting-review",
+            "awaiting-operator-review",
+            "approved",
+            "revise",
+            "failed",
+            "unknown-after-timeout",
+            "cleaned"
+          ]
+        },
+        "currentStage": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "target-check",
+                "narration",
+                "capture",
+                "render",
+                "audit",
+                "review",
+                "cleanup"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "artifactRetentionUntil": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "wordingApprovalHash": {
+          "$ref": "#/definitions/mission/properties/planHash"
+        },
+        "runtimeProfileHash": {
+          "$ref": "#/definitions/mission/properties/planHash"
+        },
+        "producerFingerprint": {
+          "$ref": "#/definitions/mission/properties/planHash"
+        },
+        "heartbeatAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stages": {
+          "type": "object",
+          "properties": {
+            "target-check": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "running",
+                    "complete",
+                    "failed",
+                    "unknown-after-timeout",
+                    "skipped"
+                  ]
+                },
+                "startedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "completedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "evidenceHash": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/mission/properties/planHash"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "errorCode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "status",
+                "startedAt",
+                "completedAt",
+                "evidenceHash",
+                "errorCode"
+              ],
+              "additionalProperties": false
+            },
+            "narration": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            },
+            "capture": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            },
+            "render": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            },
+            "audit": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            },
+            "review": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            },
+            "cleanup": {
+              "$ref": "#/definitions/mission/properties/stages/properties/target-check"
+            }
+          },
+          "required": [
+            "target-check",
+            "narration",
+            "capture",
+            "render",
+            "audit",
+            "review",
+            "cleanup"
+          ],
+          "additionalProperties": false
+        },
+        "artifacts": {
+          "type": "object",
+          "properties": {
+            "planFile": {
+              "type": "string",
+              "const": "plan.json"
+            },
+            "narrationFile": {
+              "type": "string",
+              "const": "narration.json"
+            },
+            "captureFile": {
+              "type": "string",
+              "const": "capture.json"
+            },
+            "renderFile": {
+              "type": "string",
+              "const": "render.json"
+            },
+            "auditFile": {
+              "type": "string",
+              "const": "audit.json"
+            },
+            "reviewPacketFile": {
+              "type": "string",
+              "const": "review-packet.json"
+            },
+            "reviewHistoryFile": {
+              "type": "string",
+              "const": "review-history.json"
+            },
+            "videoPath": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "posterPath": {
+              "$ref": "#/definitions/mission/properties/artifacts/properties/videoPath"
+            },
+            "timelinePath": {
+              "$ref": "#/definitions/mission/properties/artifacts/properties/videoPath"
+            },
+            "sampledFrames": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/mission/properties/artifacts/properties/videoPath"
+              }
+            }
+          },
+          "required": [
+            "planFile"
+          ],
+          "additionalProperties": false
+        },
+        "reviewRound": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "maxReviewRounds": {
+          "type": "number",
+          "const": 6
+        },
+        "failureCode": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "missionId",
+        "status",
+        "currentStage",
+        "createdAt",
+        "updatedAt",
+        "artifactRetentionUntil",
+        "planHash",
+        "wordingApprovalHash",
+        "runtimeProfileHash",
+        "producerFingerprint",
+        "heartbeatAt",
+        "stages",
+        "artifacts",
+        "reviewRound",
+        "maxReviewRounds",
+        "failureCode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

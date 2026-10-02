@@ -1,0 +1,323 @@
+{
+  "$ref": "#/definitions/plan",
+  "definitions": {
+    "plan": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000
+        },
+        "product": {
+          "$ref": "#/definitions/plan/properties/title"
+        },
+        "audience": {
+          "$ref": "#/definitions/plan/properties/title"
+        },
+        "outcome": {
+          "$ref": "#/definitions/plan/properties/title"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "captioned",
+            "narrated"
+          ]
+        },
+        "targetUrl": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 4096
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 10000
+            },
+            "height": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 10000
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "fps": {
+          "type": "number",
+          "const": 30,
+          "default": 30
+        },
+        "duration": {
+          "type": "object",
+          "properties": {
+            "targetSeconds": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 3600
+            },
+            "hardLimit": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "presentation": {
+          "type": "object",
+          "properties": {
+            "cursor": {
+              "type": "string",
+              "enum": [
+                "pointer",
+                "circle",
+                "hidden"
+              ],
+              "default": "pointer"
+            },
+            "captions": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "narrator": {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": [
+                "supplied",
+                "voicebox",
+                "elevenlabs"
+              ]
+            },
+            "voiceId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "profileId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "baseUrl": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 2048
+            },
+            "audioFiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "propertyNames": {
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "additionalProperties": false
+        },
+        "wordingApproval": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+              },
+              "before": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "during": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "after": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "say": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "learn": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "next": {
+                "type": "string",
+                "maxLength": 20000,
+                "default": ""
+              },
+              "holdMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 60000,
+                "default": 1000
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "navigate",
+                        "click",
+                        "type",
+                        "drag",
+                        "wait",
+                        "press"
+                      ]
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 20000
+                    },
+                    "url": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4096
+                    },
+                    "toSelector": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "durationMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 60000
+                    },
+                    "atMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 3600000
+                    },
+                    "spokenAnchor": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                "default": []
+              },
+              "assertions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "visible",
+                        "text"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "maxLength": 2000
+                    }
+                  },
+                  "required": [
+                    "selector",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 200
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "title",
+        "product",
+        "audience",
+        "outcome",
+        "mode",
+        "targetUrl",
+        "viewport",
+        "wordingApproval",
+        "scenes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
