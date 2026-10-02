@@ -14,4 +14,6 @@
 
 ## 0.1.0
 
+- Accept an optional `{ createSession, ready }` argument in the built-in `capture()` and `checkTargetReady()`, so an embedding application can supply its own reviewed browser session and readiness wait without copying the capture implementation. The default remains the strict single-origin session; the CLI and MCP are unchanged.
+- Keep the original capture or render error as the in-memory `cause` of a failed `generate()`; mission receipts still never serialize it.
 - Add six composable story-first demo skills, a synthetic browser fixture, local CLI/MCP documentation, and public-boundary checks.

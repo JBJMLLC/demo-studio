@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
-import { chromium, type Page, type Locator, type Browser, type BrowserContextOptions } from 'playwright';
+import { chromium, type Page, type Locator, type Browser, type BrowserContext, type BrowserContextOptions } from 'playwright';
 import type { DemoPlan, CaptureResult, NarrationResult } from './schemas.js';
 import { buildMediaClockRuntimeSource, calibrateVideo, type MarkerBracketEvent } from './media-clock.js';
 import { fileHash, jsonHash, mediaInfo, runBinary } from './media.js';
@@ -8,8 +8,22 @@ import { fileHash, jsonHash, mediaInfo, runBinary } from './media.js';
 type Point = { x: number; y: number };
 const sleep = (ms: number) => new Promise<void>((done) => setTimeout(done, ms));
 
+export interface BrowserSession {
+  context: BrowserContext;
+  /** Throws when the session observed traffic its policy refuses. Called after navigation and every action. */
+  assertBoundary: () => void;
+}
+/** Creates the browser context for one target check or capture. The default is `isolatedContext`. */
+export type CreateBrowserSession = (browser: Browser, origin: string, options: BrowserContextOptions) => Promise<BrowserSession>;
+export interface BrowserCaptureOptions {
+  /** Replaces the built-in single-origin session. The caller owns and must review the policy it supplies. */
+  createSession?: CreateBrowserSession;
+  /** Runs on the recorded page after the first navigation, before the first scene starts. */
+  ready?: (page: Page) => Promise<void>;
+}
+
 /** Network isolation applies before redirects, popups, fetches, or subresources leave the context. */
-export async function isolatedContext(browser: Browser, origin: string, options: BrowserContextOptions = {}) {
+export async function isolatedContext(browser: Browser, origin: string, options: BrowserContextOptions = {}): Promise<BrowserSession> {
   const context = await browser.newContext({ ...options, serviceWorkers: 'block' });
   let denied = false;
   await context.route('**/*', async (route) => {
@@ -39,10 +53,11 @@ export async function isolatedContext(browser: Browser, origin: string, options:
   return { context, assertBoundary: () => { if (denied) throw new Error('Browser refused an off-origin request or HTTP redirect'); } };
 }
 
-export async function checkTargetReady(plan: DemoPlan) {
+export async function checkTargetReady(plan: DemoPlan, options: BrowserCaptureOptions = {}) {
+  const createSession = options.createSession ?? isolatedContext;
   const browser = await chromium.launch({ headless: true });
   try {
-    const { context, assertBoundary } = await isolatedContext(browser, new URL(plan.targetUrl).origin, { viewport: plan.viewport });
+    const { context, assertBoundary } = await createSession(browser, new URL(plan.targetUrl).origin, { viewport: plan.viewport });
     const page = await context.newPage();
     const response = await page.goto(plan.targetUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 });
     if (!response || !response.ok()) throw new Error('Target did not return a successful document');
@@ -77,11 +92,12 @@ async function center(locator: Locator): Promise<Point> {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
-export async function capture(plan: DemoPlan, workDir: string, narration: NarrationResult): Promise<CaptureResult> {
+export async function capture(plan: DemoPlan, workDir: string, narration: NarrationResult, options: BrowserCaptureOptions = {}): Promise<CaptureResult> {
+  const createSession = options.createSession ?? isolatedContext;
   const directory = resolve(workDir, 'capture');
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const browser = await chromium.launch({ headless: true });
-  const { context, assertBoundary } = await isolatedContext(browser, new URL(plan.targetUrl).origin, { viewport: plan.viewport, recordVideo: { dir: directory, size: plan.viewport }, reducedMotion: 'reduce' });
+  const { context, assertBoundary } = await createSession(browser, new URL(plan.targetUrl).origin, { viewport: plan.viewport, recordVideo: { dir: directory, size: plan.viewport }, reducedMotion: 'reduce' });
   let pointer: Point = { x: Math.round(plan.viewport.width * .78), y: Math.round(plan.viewport.height * .72) };
   await context.addInitScript(({ initial, cursor }) => {
     const attach = () => {
@@ -114,6 +130,7 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
   try {
     const initialResponse = await page.goto(plan.targetUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 });
     if (!initialResponse?.ok() || new URL(page.url()).origin !== new URL(plan.targetUrl).origin) throw new Error('Capture target readiness changed');
+    if (options.ready) await options.ready(page);
     assertBoundary();
     await page.evaluate(async () => { await document.fonts.ready; await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))); });
     await page.mouse.move(pointer.x, pointer.y);

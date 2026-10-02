@@ -241,6 +241,29 @@ describe('public plan and durable mission core', () => {
     expect(preservedFailure.failureCode).toBe('target-check-failed');
   }, 30_000);
 
+  it('keeps the capture and render errors as in-memory causes without persisting them', async () => {
+    const work = scratch();
+    const plan = makePlan();
+    const planPath = writePlan(work, plan);
+    const prepared = await prepare(planPath, work, { actorId: 'producer', checkTargetReady: () => ({ ready: true, evidenceHash: sha256Of('target') }) });
+    const directory = resolve(work, 'missions', prepared.missionId);
+    const adapters = makeAdapters(plan, directory);
+    const captureError = await generate(prepared.missionId, work, { actorId: 'producer', capture: async () => { throw new Error('selector #private-detail timed out'); }, render: adapters.render }).catch((error: unknown) => error as Error);
+    expect(captureError.message).toMatch(/verified receipt/);
+    expect((captureError.cause as Error).message).toBe('selector #private-detail timed out');
+    expect(readFileSync(join(directory, 'mission.json'), 'utf8')).not.toContain('private-detail');
+
+    const renderWork = scratch();
+    const renderPlanPath = writePlan(renderWork, plan);
+    const renderMission = await prepare(renderPlanPath, renderWork, { actorId: 'producer', checkTargetReady: () => ({ ready: true, evidenceHash: sha256Of('target') }) });
+    const renderDirectory = resolve(renderWork, 'missions', renderMission.missionId);
+    const renderAdapters = makeAdapters(plan, renderDirectory);
+    const renderError = await generate(renderMission.missionId, renderWork, { actorId: 'producer', capture: renderAdapters.capture, render: async () => { throw new Error('composition #private-detail failed'); } }).catch((error: unknown) => error as Error);
+    expect(renderError.message).toMatch(/Render did not reach a verified receipt/);
+    expect((renderError.cause as Error).message).toBe('composition #private-detail failed');
+    expect(readFileSync(join(renderDirectory, 'mission.json'), 'utf8')).not.toContain('private-detail');
+  }, 30_000);
+
   it('does not repeat an uncertain capture until an explicit reconciliation decision', async () => {
     const work = scratch();
     const plan = makePlan();
