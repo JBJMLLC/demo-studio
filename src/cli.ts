@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
 import { readFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { doctor } from './doctor.js';
 import { prepareDemo, generateDemo, getStatus, cleanup, submitReview, reconcile } from './runtime.js';
 import { missionDirectory, missionPath, readJson } from './store.js';
@@ -63,7 +65,7 @@ export async function main(args = process.argv.slice(2)) {
   if (result && typeof result === 'object' && 'status' in result && ['failed', 'unknown-after-timeout'].includes(String(result.status))) process.exitCode = 1;
 }
 
-if (process.argv[1] && /(?:^|[/\\])cli\.(?:ts|js)$/.test(process.argv[1])) main().catch((error: unknown) => {
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) main().catch((error: unknown) => {
   // Detailed provider output, URLs, and local file paths are deliberately not echoed.
   process.stderr.write(`${JSON.stringify({ error: error instanceof Error ? error.name : 'Error', message: 'Operation failed. Inspect the durable status receipt and troubleshooting guide.' })}\n`);
   process.exitCode = 1;
