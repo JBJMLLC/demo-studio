@@ -4,6 +4,10 @@ Story-first, local-first skills and tools for planning, recording, and auditing 
 
 The six skills are composable and work one at a time. The local toolchain supplies a captioned default, a synthetic browser fixture, and auditable run artifacts. Optional voice providers may require separate credentials and terms; the default does not.
 
+## Example output
+
+The [captioned Fieldnote walkthrough](https://github.com/JBJMLLC/demo-studio/releases/download/v0.1.0/fieldnote-demo.mp4) records adding a populated chart, widening it, and opening a read-only share view. It uses an original fictional app and synthetic records, with no credentials or voice recording. The [v0.1.0 release](https://github.com/JBJMLLC/demo-studio/releases/tag/v0.1.0) includes the compiled toolkit, video, poster, checksums, and an independent review summary.
+
 ## Install a skill
 
 Use the skills CLI to browse or install the public pack:
