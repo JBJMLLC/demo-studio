@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import type { CaptureResult, DemoPlan, NarrationResult, RenderResult } from './schemas.js';
 import type { VideoProps } from './composition.js';
 import { missionPath } from './store.js';
+import { planZoom } from './zoom.js';
 import { writeJsonAtomic } from './store.js';
 import { fileHash, mediaInfo, runBinary, MediaIntegrityError, verifyFirstFrameIntegrity } from './media.js';
 
@@ -56,7 +57,7 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     });
     const durationInFrames = Math.ceil(Math.max(capture.durationMs * plan.fps / 1000, ...audio.map((track) => track.startFrame + track.frames + plan.fps)));
     const captionBandHeight = plan.presentation.captions ? Math.min(Math.max(72, Math.round(capture.height * .08)), Math.floor(capture.height * .2)) : 0;
-    const props: VideoProps = { recordingUrl: media.urls.get(recording)!, width: capture.width, height: capture.height, durationInFrames, audio, captionBandHeight, captions: plan.presentation.captions ? capture.scenes.flatMap((scene) => captionChunks(plan.scenes.find((entry) => entry.id === scene.id)!.say, Math.round(scene.startMs * plan.fps / 1000), Math.round(scene.endMs * plan.fps / 1000))) : [] };
+    const props: VideoProps = { recordingUrl: media.urls.get(recording)!, width: capture.width, height: capture.height, durationInFrames, audio, captionBandHeight, zoom: { scale: plan.presentation.zoom, windows: plan.presentation.zoom > 1 ? planZoom(capture.events, plan.fps, durationInFrames) : [] }, captions: plan.presentation.captions ? capture.scenes.flatMap((scene) => captionChunks(plan.scenes.find((entry) => entry.id === scene.id)!.say, Math.round(scene.startMs * plan.fps / 1000), Math.round(scene.endMs * plan.fps / 1000))) : [] };
     const nearby = fileURLToPath(new URL('./composition.js', import.meta.url));
     const source = fileURLToPath(new URL('./composition.tsx', import.meta.url));
     // The installed runtime is checksum-verified and immutable. Remotion's
@@ -92,7 +93,7 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     const posterPath = 'render/poster.png';
     await runBinary('ffmpeg', ['-y', '-ss', String(Math.max(0, info.durationMs / 1000 - 1.5)), '-i', videoPath, '-frames:v', '1', resolve(missionDir, posterPath)]);
     const sha256 = await fileHash(videoPath);
-    await writeFile(resolve(directory, 'timeline.json'), JSON.stringify({ schemaVersion: 1, fps: plan.fps, durationMs: info.durationMs, playbackRate: 1, captionBandHeight, viewportTransform: { scale: (capture.height - captionBandHeight) / capture.height, offsetX: capture.width * captionBandHeight / capture.height / 2, offsetY: 0 }, videoHash: sha256, scenes: capture.scenes, events: capture.events, samples: samples.map((atMs, index) => ({ atMs, path: frames[index] })) }, null, 2), { mode: 0o600 });
+    await writeFile(resolve(directory, 'timeline.json'), JSON.stringify({ schemaVersion: 1, fps: plan.fps, durationMs: info.durationMs, playbackRate: 1, captionBandHeight, viewportTransform: { scale: (capture.height - captionBandHeight) / capture.height, offsetX: capture.width * captionBandHeight / capture.height / 2, offsetY: 0 }, zoom: props.zoom, videoHash: sha256, scenes: capture.scenes, events: capture.events, samples: samples.map((atMs, index) => ({ atMs, path: frames[index] })) }, null, 2), { mode: 0o600 });
     return { videoPath: 'render/demo.mp4', posterPath, durationMs: info.durationMs, sampledFrames: frames, timelinePath: 'render/timeline.json', sha256, playbackRate: 1, hasAudio: info.hasAudio };
   } finally { await media.close(); }
 }

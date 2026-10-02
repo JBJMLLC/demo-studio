@@ -48,7 +48,7 @@ describe('rendered first-frame integrity', () => {
     ]);
     ffmpeg([
       '-i', reference,
-      '-filter_complex', `[0:v]scale=${width}:${height - captionBandHeight}:force_original_aspect_ratio=decrease,pad=${width}:${height - captionBandHeight}:(ow-iw)/2:(oh-ih)/2:color=0xf5f7fb,format=yuv444p[screen];color=c=0x141a29:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
+      '-filter_complex', `[0:v]scale=${width}:${height - captionBandHeight}:force_original_aspect_ratio=decrease,pad=${width}:${height - captionBandHeight}:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv444p[screen];color=c=black:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
       '-map', '[out]', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', clean,
     ]);
     ffmpeg([
@@ -57,7 +57,7 @@ describe('rendered first-frame integrity', () => {
     ]);
     ffmpeg([
       '-i', reference,
-      '-filter_complex', `[0:v]scale=${width / 2}:${height / 2}:flags=neighbor,split=4[a][b][c][d];[a][b][c][d]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[copies];[copies]crop=${width}:${height - captionBandHeight}:0:0,format=yuv444p[screen];color=c=0x141a29:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
+      '-filter_complex', `[0:v]scale=${width / 2}:${height / 2}:flags=neighbor,split=4[a][b][c][d];[a][b][c][d]xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0[copies];[copies]crop=${width}:${height - captionBandHeight}:0:0,format=yuv444p[screen];color=c=black:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
       '-map', '[out]', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', tiled,
     ]);
     ffmpeg([
@@ -66,7 +66,7 @@ describe('rendered first-frame integrity', () => {
     ]);
     ffmpeg([
       '-i', highFrequencyReference,
-      '-filter_complex', `[0:v]scale=${width}:${height - captionBandHeight}:force_original_aspect_ratio=decrease,pad=${width}:${height - captionBandHeight}:(ow-iw)/2:(oh-ih)/2:color=0xf5f7fb,format=yuv444p[screen];color=c=0x141a29:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
+      '-filter_complex', `[0:v]scale=${width}:${height - captionBandHeight}:force_original_aspect_ratio=decrease,pad=${width}:${height - captionBandHeight}:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv444p[screen];color=c=black:s=${width}x${captionBandHeight}:r=30:d=1,format=yuv444p[band];[screen][band]vstack=inputs=2,format=yuv420p[out]`,
       '-map', '[out]', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', highFrequencyClean,
     ]);
   }, 30_000);
