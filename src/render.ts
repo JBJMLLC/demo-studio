@@ -60,7 +60,10 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     const props: VideoProps = { recordingUrl: media.urls.get(recording)!, width: capture.width, height: capture.height, durationInFrames, audio, captionBandHeight, captions: plan.presentation.captions ? capture.scenes.flatMap((scene) => captionChunks(plan.scenes.find((entry) => entry.id === scene.id)!.say, Math.round(scene.startMs * plan.fps / 1000), Math.round(scene.endMs * plan.fps / 1000))) : [] };
     const nearby = fileURLToPath(new URL('./composition.js', import.meta.url));
     const source = fileURLToPath(new URL('./composition.tsx', import.meta.url));
-    const serveUrl = await bundle({ entryPoint: existsSync(nearby) ? nearby : source, outDir: resolve(directory, 'bundle') });
+    // The installed runtime is checksum-verified and immutable. Remotion's
+    // default Webpack cache is rooted beside its package.json, so disable that
+    // cache instead of allowing build output inside the verified package.
+    const serveUrl = await bundle({ entryPoint: existsSync(nearby) ? nearby : source, outDir: resolve(directory, 'bundle'), enableCaching: false });
     const composition = await selectComposition({ serveUrl, id: 'Demo', inputProps: props, browserExecutable: chromium.executablePath() });
     const videoPath = resolve(directory, 'demo.mp4');
     await renderMedia({ composition, serveUrl, codec: 'h264', outputLocation: videoPath, inputProps: props, browserExecutable: chromium.executablePath(), concurrency: 2, overwrite: true, onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }) });

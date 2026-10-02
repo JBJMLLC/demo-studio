@@ -27,7 +27,7 @@ fixture.stdout.on('data', () => { fixtureReady = true; });
 fixture.stderr.on('data', () => undefined);
 const connect = async () => {
   const client = new Client({ name: 'standalone-smoke', version: packageVersion });
-  await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve(process.env.DEMO_STUDIO_MCP_ENTRY || 'dist/mcp.js')], stderr: 'pipe' }));
+  await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve(process.env.DEMO_STUDIO_MCP_ENTRY || 'dist/cli.js'), 'mcp'], stderr: 'pipe' }));
   return client;
 };
 const readResult = (value: unknown) => {

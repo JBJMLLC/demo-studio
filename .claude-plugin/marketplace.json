@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Composable skills and local tools for grounded product walkthroughs.",
-    "version": "0.1.1"
+    "version": "0.1.2"
   },
   "plugins": [
     {
       "name": "demo-studio",
       "source": ".",
       "description": "Story-first brief, storyboard, narration, review, browser capture, and audit skills.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "author": {
         "name": "JBJMLLC"
       },

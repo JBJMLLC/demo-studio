@@ -4,6 +4,5 @@ export * from './mission.js';
 export * from './narration.js';
 export * from './doctor.js';
 export * from './adapters.js';
-export { capture, checkTargetReady } from './browser.js';
-export { render } from './render.js';
-export { createMcpServer } from './mcp.js';
+export * from './media-clock.js';
+export { packageVersion } from './version.js';

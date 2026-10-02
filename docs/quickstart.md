@@ -23,7 +23,33 @@ npm run build
 node dist/cli.js doctor
 ```
 
-If you already have a checkout, skip the first two commands. The same build steps work after extracting a source archive. There is no npm package installation command for the runtime.
+If you already have a checkout, skip the first two commands. The same build steps work after extracting a source archive. No registry package is published; use the source build or a compiled release archive below.
+
+## Install a compiled release instead
+
+Download a toolkit `.tgz` and `SHA256SUMS` from the same [release](https://github.com/JBJMLLC/demo-studio/releases). Verify the archive before installation. A GitHub source archive is not a compiled npm archive.
+
+For a conventional npm project:
+
+```sh
+npm install /absolute/path/to/jbjmllc-demo-studio-VERSION.tgz
+npx playwright install chromium
+node node_modules/@jbjmllc/demo-studio/dist/cli.js doctor
+```
+
+Replace `VERSION` and the path with your downloaded artifact. Run the bundled fictional server at `node_modules/@jbjmllc/demo-studio/examples/quickstart/server.mjs` and use its adjacent `plan.json`, or keep a source checkout for the manual example below. Repository development scripts are not consumer commands.
+
+For a Yarn Plug'n'Play project, add the same toolkit archive with your project's Yarn package manager. From that project directory:
+
+```sh
+yarn exec demo-studio capsule status
+yarn exec demo-studio capsule install
+yarn exec demo-studio doctor
+```
+
+The install command explicitly acquires the separate runtime selected by the toolkit's exact version, archive digest, immutable URL, and file inventory. It uses an isolated conventional dependency tree without modifying the workspace graph or global configuration. Chromium, FFmpeg and `ffprobe` are still required; doctor checks readiness without installing them. Run the normal commands through `yarn exec demo-studio`, not direct JavaScript paths inside a PnP archive.
+
+Do not import `@jbjmllc/demo-studio/runtime` in-process under PnP. Use safe host exports and the [stdio MCP boundary](mcp.md). Inspect failed or uncertain installs before [explicit capsule recovery](troubleshooting.md).
 
 ## One-command smoke
 

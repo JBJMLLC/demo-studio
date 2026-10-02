@@ -6,7 +6,7 @@ The six skills are composable and work one at a time. The local toolchain suppli
 
 ## Example output
 
-The [captioned Fieldnote walkthrough](https://github.com/JBJMLLC/demo-studio/releases/download/v0.1.0/fieldnote-demo.mp4) records adding a populated chart, widening it, and opening a read-only share view. It uses an original fictional app and synthetic records, with no credentials or voice recording. The [v0.1.0 release](https://github.com/JBJMLLC/demo-studio/releases/tag/v0.1.0) includes the compiled toolkit, video, poster, checksums, and an independent review summary.
+The [captioned Fieldnote walkthrough](https://github.com/JBJMLLC/demo-studio/releases/download/v0.1.1/fieldnote-demo.mp4) records adding a populated chart, widening it, and opening a read-only share view. It uses an original fictional app and synthetic records, with no credentials or voice recording. [Release assets](https://github.com/JBJMLLC/demo-studio/releases) include compiled archives, the video, poster, checksums, and an independent review summary. The example is captioned, not narrated; optional speech uses your own authorized recordings or provider configuration.
 
 ## Install a skill
 
@@ -92,6 +92,23 @@ Before packaging, scan the produced release archive too: `node scripts/check-pub
 The source-boundary command runs its own synthetic positive/negative fixtures before scanning repository files. It checks generic private-network, credential, path, and archive hazards; it does not contain a private-term dictionary. An optional `--private-terms-file` can supply a local denylist from outside the checkout, and reports only file names and rule IDs.
 
 Source archives are not installed as an npm package. For a built tarball, install the archive locally with `npm install /path/to/package.tgz`, then run the packaged CLI with `node node_modules/@jbjmllc/demo-studio/dist/cli.js`; `npm run` source scripts are not part of that consumer workflow. This repository has not published an npm package.
+
+## Yarn Plug'n'Play and integrations
+
+The package root, schemas, contracts, media-clock helpers, and capsule API are safe host imports. Under Yarn Plug'n'Play, capture, rendering and MCP run in an integrity-pinned standalone runtime, not the host's in-process Remotion dependency graph.
+
+Add a downloaded, checksum-verified toolkit archive to your Yarn project, then run:
+
+```sh
+yarn exec demo-studio capsule status
+yarn exec demo-studio capsule install
+yarn exec demo-studio doctor
+yarn exec demo-studio mcp
+```
+
+Installation is explicit. Doctor never downloads or repairs a runtime. Cache reuse requires matching artifact identity, owned installed bytes, Node ABI, OS, and architecture. Failed or uncertain installs require inspection and explicit reconciliation.
+
+Source clones and conventional npm installations can use the bundled runtime directly. Advanced adapter embedding uses `@jbjmllc/demo-studio/runtime` in a conventional `node_modules` installation; PnP applications use [stdio MCP](docs/mcp.md). See [configuration](docs/configuration.md), [adapters](docs/adapters.md), and [troubleshooting](docs/troubleshooting.md).
 
 ## License
 
