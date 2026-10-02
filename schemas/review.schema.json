@@ -1,0 +1,129 @@
+{
+  "$ref": "#/definitions/review",
+  "definitions": {
+    "review": {
+      "type": "object",
+      "properties": {
+        "missionId": {
+          "type": "string",
+          "pattern": "^demo-[a-f0-9]{24}$"
+        },
+        "packetHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "planHash": {
+          "$ref": "#/definitions/review/properties/packetHash"
+        },
+        "videoHash": {
+          "$ref": "#/definitions/review/properties/packetHash"
+        },
+        "reviewerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "reviewerType": {
+          "type": "string",
+          "enum": [
+            "independent",
+            "operator"
+          ]
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "revise"
+          ]
+        },
+        "checks": {
+          "type": "object",
+          "properties": {
+            "contentTruth": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "fail",
+                "inconclusive"
+              ]
+            },
+            "uxQuality": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "fail",
+                "inconclusive"
+              ]
+            }
+          },
+          "required": [
+            "contentTruth",
+            "uxQuality"
+          ],
+          "additionalProperties": false
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "P0",
+                  "P1",
+                  "P2",
+                  "P3"
+                ]
+              },
+              "sceneId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "disposition": {
+                "type": "string",
+                "enum": [
+                  "fixed",
+                  "accepted",
+                  "rejected"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "severity",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 500
+        }
+      },
+      "required": [
+        "missionId",
+        "packetHash",
+        "planHash",
+        "videoHash",
+        "reviewerId",
+        "reviewerType",
+        "verdict",
+        "checks",
+        "findings"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

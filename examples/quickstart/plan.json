@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "wordingApproval": {
+    "sha256": "sha256:fe9b793212634fe64a3cc31b76b6081f17fe58cc835ae38c51e34c9826beae77"
+  },
+  "id": "weekly-sign-ups",
+  "title": "Give a useful chart room to read",
+  "product": "Fieldnote",
+  "audience": "Project leads reviewing weekly signup activity",
+  "outcome": "Add a populated signup chart, widen it, and share a read-only view.",
+  "mode": "captioned",
+  "presentation": {
+    "cursor": "pointer",
+    "captions": true
+  },
+  "duration": {
+    "targetSeconds": 35,
+    "hardLimit": false
+  },
+  "targetUrl": "http://127.0.0.1:4399",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "fps": 30,
+  "scenes": [
+    {
+      "id": "add-chart",
+      "before": "The Fieldnote overview shows two populated weekly trends and room to add another chart.",
+      "during": "A chart title is entered and the new seven-day sign-ups chart appears in the grid.",
+      "after": "Weekly sign-ups is visible with a populated trend from 36 to 62.",
+      "say": "Fieldnote opens on a board with two populated trends. I’m adding a weekly sign-ups chart, naming it clearly, and checking its fresh seven-day view so a project lead can spot the change without leaving this page.",
+      "learn": "A named, populated chart gives the team a useful baseline on the existing board.",
+      "next": "Widen the new chart so its trend is easier to read alongside the existing reports.",
+      "holdMs": 1000,
+      "actions": [
+        {
+          "id": "open-add-chart",
+          "type": "click",
+          "selector": "button[data-testid='add-chart']",
+          "atMs": 2500,
+          "spokenAnchor": "I’m adding a weekly sign-ups chart"
+        },
+        {
+          "id": "name-chart",
+          "type": "type",
+          "selector": "input[data-testid='chart-title']",
+          "value": "Weekly sign-ups",
+          "atMs": 6000,
+          "spokenAnchor": "naming it clearly"
+        },
+        {
+          "id": "create-chart",
+          "type": "click",
+          "selector": "button[data-testid='confirm-add-chart']",
+          "atMs": 9500,
+          "spokenAnchor": "checking its fresh seven-day view"
+        }
+      ],
+      "assertions": [
+        {
+          "selector": ".topbar",
+          "kind": "visible"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups",
+          "kind": "visible"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups .chart-summary",
+          "kind": "text",
+          "value": "36 → 62 sign-ups"
+        }
+      ]
+    },
+    {
+      "id": "widen-chart",
+      "before": "The new chart is populated in a compact card, below the existing weekly visits and completed-task charts on the same overview.",
+      "during": "The resize handle moves to the Wide target and the chart spans both grid columns.",
+      "after": "The sign-ups line fills the wider card, and the earlier visit and task charts remain part of the overview.",
+      "say": "Now I’m widening Weekly sign-ups so its seven-day line has room to read; the visits and completed-task trends stay nearby for comparison.",
+      "learn": "A wider chart gives the rising line more room without removing earlier evidence from the board.",
+      "next": "Share the finished board as a read-only view.",
+      "holdMs": 1000,
+      "actions": [
+        {
+          "id": "widen-signups",
+          "type": "drag",
+          "selector": "button[data-testid='resize-handle-weekly-sign-ups']",
+          "toSelector": "button[data-testid='wide-dropzone']",
+          "atMs": 2200,
+          "spokenAnchor": "I’m widening Weekly sign-ups"
+        }
+      ],
+      "assertions": [
+        {
+          "selector": ".topbar",
+          "kind": "visible"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups[data-size='wide']",
+          "kind": "visible"
+        },
+        {
+          "selector": "#chart-card-weekly-visits",
+          "kind": "visible"
+        }
+      ]
+    },
+    {
+      "id": "share-view",
+      "before": "The completed overview shows the populated, full-width sign-ups chart and its neighboring trends.",
+      "during": "A read-only link is created and opened in the browser.",
+      "after": "The shared page shows the same synthetic chart and identifies the view as read-only, with editing controls absent.",
+      "say": "The chart is ready to share, so I’m creating a read-only link and opening the shared view to confirm the same data is visible without editing controls.",
+      "learn": "The finished result can be reviewed without exposing editing controls.",
+      "next": "The viewer can now review the weekly trend on the shared board.",
+      "holdMs": 1000,
+      "actions": [
+        {
+          "id": "open-share-dialog",
+          "type": "click",
+          "selector": "button[data-testid='share-view']",
+          "atMs": 2000,
+          "spokenAnchor": "The chart is ready to share"
+        },
+        {
+          "id": "create-read-only-link",
+          "type": "click",
+          "selector": "button[data-testid='create-share-link']",
+          "atMs": 4500,
+          "spokenAnchor": "creating a read-only link"
+        },
+        {
+          "id": "open-shared-view",
+          "type": "click",
+          "selector": "a[data-testid='open-share-preview']",
+          "atMs": 7000,
+          "spokenAnchor": "opening the shared view"
+        }
+      ],
+      "assertions": [
+        {
+          "selector": ".topbar",
+          "kind": "visible"
+        },
+        {
+          "selector": "main[data-testid='shared-view']",
+          "kind": "visible"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups[data-size='wide'] .chart-title",
+          "kind": "text",
+          "value": "Weekly sign-ups"
+        },
+        {
+          "selector": "[data-testid='read-only-banner']",
+          "kind": "text",
+          "value": "This is a read-only shared view of the sample workspace."
+        }
+      ]
+    }
+  ]
+}
