@@ -5,6 +5,7 @@ import { prepare, generate, getStatus, cleanup, submitReview, reconcile } from '
 import { prepareNarration } from './narration.js';
 import { checkTargetReady, capture } from './browser.js';
 import { render } from './render.js';
+import { sha256Of } from './store.js';
 
 export { getStatus, cleanup, submitReview, reconcile };
 export function runtimeFingerprint() {
@@ -21,6 +22,6 @@ export function prepareDemo(planPath: string, workDir: string, actorId: string) 
 }
 export async function generateDemo(missionId: string, workDir: string, actorId: string) {
   const receipt = await getStatus(missionId, workDir);
-  if (receipt.runtimeProfile !== runtimeFingerprint()) throw new Error('Runtime changed after preparation; prepare again before generation');
+  if (receipt.runtimeProfileHash !== sha256Of(runtimeFingerprint())) throw new Error('Runtime changed after preparation; prepare again before generation');
   return generate(missionId, workDir, { actorId, capture, render });
 }
