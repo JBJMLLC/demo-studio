@@ -50,25 +50,47 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install the production release archive
+      - name: Pack both production archives and install the pinned runtime
         id: pack
         run: |
           mkdir -p "$RUNNER_TEMP/demo-studio-release" "$RUNNER_TEMP/demo-studio-production"
-          npm pack --pack-destination "$RUNNER_TEMP/demo-studio-release" --json > "$RUNNER_TEMP/demo-studio-pack.json"
-          archive_name="$(node -e 'const packed = require(process.argv[1]); if (packed.length !== 1 || !packed[0].filename) process.exit(1); process.stdout.write(packed[0].filename)' "$RUNNER_TEMP/demo-studio-pack.json")"
-          echo "archive_name=$archive_name" >> "$GITHUB_OUTPUT"
-          archive_path="$RUNNER_TEMP/demo-studio-release/$archive_name"
-          node scripts/check-public-boundary.mjs --archive "$archive_path"
-          npm install --prefix "$RUNNER_TEMP/demo-studio-production" --omit=dev "$archive_path"
-          "$RUNNER_TEMP/demo-studio-production/node_modules/.bin/demo-studio" doctor
+          version="$(node -p 'require("./package.json").version')"
+          toolkit_archive_name="jbjmllc-demo-studio-${version}.tgz"
+          runtime_archive_name="jbjmllc-demo-studio-runtime-${version}.tgz"
+          npm run pack:runtime -- --artifact-dir "$RUNNER_TEMP/demo-studio-release" > "$RUNNER_TEMP/demo-studio-runtime-pack.json"
+          runtime_sha="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).sha256)' dist/runtime-capsule.json)"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/demo-studio-release" --json > "$RUNNER_TEMP/demo-studio-pack.json"
+          node -e 'const packed = require(process.argv[1]); if (packed.length !== 1 || packed[0].filename !== process.argv[2]) process.exit(1)' "$RUNNER_TEMP/demo-studio-pack.json" "$toolkit_archive_name"
+          runtime_archive_path="$RUNNER_TEMP/demo-studio-release/$runtime_archive_name"
+          toolkit_archive_path="$RUNNER_TEMP/demo-studio-release/$toolkit_archive_name"
+          test -f "$runtime_archive_path"
+          test -f "$toolkit_archive_path"
+          {
+            echo "toolkit_archive_name=$toolkit_archive_name"
+            echo "runtime_archive_name=$runtime_archive_name"
+            echo "runtime_sha=$runtime_sha"
+            echo "toolkit_archive_path=$toolkit_archive_path"
+            echo "runtime_archive_path=$runtime_archive_path"
+          } >> "$GITHUB_OUTPUT"
+          node scripts/check-public-boundary.mjs --archive "$toolkit_archive_path"
+          node scripts/check-public-boundary.mjs --archive "$runtime_archive_path"
+          npm install --prefix "$RUNNER_TEMP/demo-studio-production" --omit=dev "$toolkit_archive_path"
+          demo="$RUNNER_TEMP/demo-studio-production/node_modules/.bin/demo-studio"
+          install_output="$("$demo" capsule install --archive "$runtime_archive_path" --version "$version" --sha256 "$runtime_sha")"
+          printf '%s' "$install_output" | node -e 'let value = ""; process.stdin.setEncoding("utf8"); process.stdin.on("data", (part) => value += part); process.stdin.on("end", () => { const result = JSON.parse(value); if (result.status !== "ready") process.exit(1); })'
+          status_path="$RUNNER_TEMP/demo-studio-capsule-status.json"
+          "$demo" capsule status > "$status_path"
+          node -e 'const result = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")); if (result.status !== "ready" || result.descriptor.sha256 !== process.argv[2]) process.exit(1)' "$status_path" "$runtime_sha"
+          "$demo" doctor
+          "$demo" --help >/dev/null
 
       - name: Verify the production archive with Yarn Plug'n'Play
-        run: node tests/yarn-pnp-smoke.mjs "$RUNNER_TEMP/demo-studio-release/${{ steps.pack.outputs.archive_name }}"
+        run: node tests/yarn-pnp-smoke.mjs "${{ steps.pack.outputs.toolkit_archive_path }}" "${{ steps.pack.outputs.runtime_archive_path }}"
 
       - name: Smoke test the installed runtime with the synthetic fixture
         id: smoke
         env:
-          DEMO_STUDIO_MCP_ENTRY: ${{ runner.temp }}/demo-studio-production/node_modules/@jbjmllc/demo-studio/dist/mcp.js
+          DEMO_STUDIO_MCP_ENTRY: ${{ runner.temp }}/demo-studio-production/node_modules/@jbjmllc/demo-studio/dist/cli.js
           DEMO_STUDIO_SMOKE_KEEP_REVIEW: '1'
         run: npm run test:smoke
 
@@ -99,10 +121,18 @@ jobs:
       - name: Retain the validated production archive
         uses: actions/upload-artifact@v7
         with:
-          name: production-archive-node-${{ matrix.node-version }}
+          name: production-toolkit-archive-node-${{ matrix.node-version }}
           retention-days: 7
           if-no-files-found: error
-          path: ${{ runner.temp }}/demo-studio-release/${{ steps.pack.outputs.archive_name }}
+          path: ${{ steps.pack.outputs.toolkit_archive_path }}
+
+      - name: Retain the pinned runtime archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-runtime-archive-node-${{ matrix.node-version }}
+          retention-days: 7
+          if-no-files-found: error
+          path: ${{ steps.pack.outputs.runtime_archive_path }}
 
       - name: Validate skills
         run: node scripts/check-skills.mjs

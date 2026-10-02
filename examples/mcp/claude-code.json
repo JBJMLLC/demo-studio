@@ -2,7 +2,7 @@
   "mcpServers": {
     "demo-studio": {
       "command": "node",
-      "args": ["/path/to/built/demo-studio/dist/mcp.js"]
+      "args": ["/path/to/built/demo-studio/dist/cli.js", "mcp"]
     }
   }
 }

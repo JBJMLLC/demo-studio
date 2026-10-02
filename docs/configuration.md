@@ -16,6 +16,16 @@ The required fields and action formats are in the [plan reference](plan-format.m
 
 Use a canonical `targetUrl` that serves the page directly. The built-in browser adapter blocks all HTTP redirects (even same-origin redirects), restricts HTTP(S) and WebSocket traffic to that exact origin, and disables service workers. Additional popup tabs are not recorded; plan the demonstration in one page. Keep required browser assets on the same origin; a CDN, external login, or streaming service needs a separately reviewed custom `BrowserAdapter`, not an allowlist override in the built-in adapter. See [adapter boundaries](adapters.md).
 
+## Standalone runtime capsule
+
+PnP hosts use the generated descriptor exported by `@jbjmllc/demo-studio/capsule`. It binds the runtime package name, version, archive SHA-256, immutable URL and owned file inventory. Do not replace it with an implicit latest version. The same public API handles explicit installation, read-only status, integrity checks, retry reconciliation and stdio MCP launch.
+
+`DEMO_STUDIO_RUNTIME_CACHE_DIR` selects a local parent cache directory; programmatic callers can supply `cacheDirectory`. Keep it separate from source files and video mission workspaces. Cache compatibility includes Node ABI, OS and architecture. Installed runtime files must match the pinned inventory; malformed receipts, redirected paths and changed bytes are failures, not permission to overwrite the cache. Prior attempts remain evidence.
+
+Source/npm use can run the bundled runtime directly. Changing runtime identity requires fresh preparation and review; a usable cache alone is not approval. See [CLI recovery](cli.md) and [MCP integration](mcp.md).
+
+Capsule installation disables package install scripts. The owned npm child may remove an inherited `npm_config_allow_scripts` invocation setting, which is incompatible with project-scoped installs; `--ignore-scripts` remains enabled. Unrelated npm settings and global configuration are unchanged. See [npm's install-script policy](https://docs.npmjs.com/cli/install/#allow-scripts).
+
 ## Captioned output
 
 Use `"mode": "captioned"` for the no-provider default. Captions are generated from each scene's `say` field. Set `presentation.captions` to `false` only when the requested presentation needs no captions. The captioned workflow does not require a voice profile, key, or hosted speech service.

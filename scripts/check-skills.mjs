@@ -46,6 +46,15 @@ if (JSON.stringify(actualSkills) !== JSON.stringify(expected)) {
 }
 
 const seenNames = new Set();
+const toolkit = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+const marketplace = JSON.parse(readFileSync(resolve(root, '.claude-plugin/marketplace.json'), 'utf8'));
+if (plugin.version !== toolkit.version) issues.push('.claude-plugin/plugin.json [version-must-match-toolkit-package]');
+if (marketplace.metadata?.version !== toolkit.version) issues.push('.claude-plugin/marketplace.json [metadata-version-must-match-toolkit-package]');
+if (marketplace.name !== plugin.name || !Array.isArray(marketplace.plugins) || marketplace.plugins.length !== 1
+  || marketplace.plugins.some((entry) => entry.name !== plugin.name || entry.version !== toolkit.version)) {
+  issues.push('.claude-plugin/marketplace.json [plugin-versions-must-match-toolkit-package]');
+}
+
 for (const skillName of expectedSkills) {
   const skillDir = resolve(skillsRoot, skillName);
   const entrypoint = resolve(skillDir, "SKILL.md");

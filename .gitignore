@@ -9,4 +9,5 @@ test-results/
 coverage/
 *.log
 *.tgz
+release-artifacts/
 .DS_Store

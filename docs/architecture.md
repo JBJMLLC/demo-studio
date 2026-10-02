@@ -24,6 +24,14 @@ request and product evidence
 
 The default workspace is `.demo-studio/<run-name>/`; the plan remains in source control, while generated media and run receipts stay in the declared workspace. Do not reuse a prior capture merely because it exists. Reuse is valid only if it still proves the exact approved scene and state.
 
+## Host and runtime boundary
+
+There is one editable public implementation of capture, narration, rendering and review. Conventional npm installs and source clones can run it locally. PnP hosts use a lightweight launcher and a conventional runtime capsule through stdio MCP, avoiding Remotion's transitive peer-resolution limitations.
+
+The release build packs the runtime first, then generates the toolkit descriptor from those actual bytes. This avoids a self-hash cycle. The descriptor binds version, archive digest, immutable location and owned file inventory; cache compatibility also distinguishes Node ABI, OS and architecture. Attempts and uncertain outcomes have durable receipts. Doctor/status are read-only; install and retry are explicit.
+
+The capsule is not an environment provisioner or a separately editable engine. Product integrations consume the public release. Safe host exports carry schemas/contracts/helpers; `./runtime` supports conventional adapter embedding, not in-process PnP. See [adapters](adapters.md) and [MCP setup](mcp.md).
+
 ## Validation boundaries
 
 Static plan validation checks required fields and action mappings. Browser assertions establish that the app reached the expected state. The media audit verifies what the viewer actually sees and hears. None of these replaces the independent semantic review needed before publication.

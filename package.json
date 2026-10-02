@@ -1,6 +1,6 @@
 {
   "name": "@jbjmllc/demo-studio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Story-first product demos: skills, browser capture, narration, rendering, and evidence-based review.",
   "type": "module",
   "license": "MIT",
@@ -10,7 +10,9 @@
     ".": "./dist/index.js",
     "./schemas": "./dist/schemas.js",
     "./contracts": "./dist/contracts.js",
-    "./media-clock": "./dist/media-clock.js"
+    "./media-clock": "./dist/media-clock.js",
+    "./capsule": "./dist/capsule.js",
+    "./runtime": "./dist/runtime-api.js"
   },
   "files": ["dist", "src/composition.tsx", "skills", "schemas", "docs", "examples", "scripts", ".claude-plugin", "npm-shrinkwrap.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "scripts": {
@@ -18,12 +20,14 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --maxWorkers=2",
     "demo": "tsx src/cli.ts",
-    "mcp": "tsx src/mcp.ts",
+    "mcp": "tsx src/cli.ts mcp",
+    "pack:runtime": "node scripts/pack-runtime-capsule.mjs",
     "example": "node examples/quickstart/server.mjs",
     "check:public": "node scripts/check-public-boundary.mjs",
     "check:skills": "node scripts/check-skills.mjs",
     "test:smoke": "tsx scripts/smoke.ts",
-    "schemas": "tsx scripts/export-schemas.ts"
+    "schemas": "tsx scripts/export-schemas.ts",
+    "prepack": "npm run build && npm run pack:runtime"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.31.0",

@@ -473,6 +473,7 @@
       const statusLine = document.querySelector("#run-status");
       const sharedRoute = window.location.pathname === "/shared/weekly-growth-demo";
       const chartStorageKey = "fieldnote-demo-weekly-sign-ups";
+      const signUpTrend = [36, 39, 38, 47, 45, 52, 62];
 
       function chartSlug(value) {
         return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "sample-chart";
@@ -482,6 +483,22 @@
         const node = document.createElementNS("http://www.w3.org/2000/svg", name);
         for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
         return node;
+      }
+
+      function chartGeometry(values) {
+        const width = 360;
+        const height = 90;
+        const plotTop = 12;
+        const plotBottom = 76;
+        const minimum = Math.min(...values);
+        const maximum = Math.max(...values);
+        const span = Math.max(1, maximum - minimum);
+        const points = values.map((value, index) => ({
+          x: index * width / (values.length - 1),
+          y: Math.round(plotBottom - (value - minimum) / span * (plotBottom - plotTop)),
+        }));
+        const line = points.map(({ x, y }, index) => `${index === 0 ? "M" : "L"}${x} ${y}`).join(" ");
+        return { line, area: `${line} V${height} H0 Z`, endpoint: points[points.length - 1] };
       }
 
       function makeChartCard(title, { wide = false, editable = false } = {}) {
@@ -504,27 +521,34 @@
         caption.textContent = "Sign-ups · last 7 days";
         headingGroup.append(heading, caption);
 
-        const menu = document.createElement("button");
-        menu.className = "chart-menu";
-        menu.type = "button";
-        menu.setAttribute("aria-label", `More options for ${title}`);
-        menu.textContent = "···";
-        header.append(headingGroup, menu);
+        header.append(headingGroup);
+        if (editable && !sharedRoute) {
+          const menu = document.createElement("button");
+          menu.className = "chart-menu";
+          menu.type = "button";
+          menu.setAttribute("aria-label", `More options for ${title}`);
+          menu.textContent = "···";
+          header.append(menu);
+        }
 
         const valueRow = document.createElement("div");
         valueRow.className = "chart-value-row";
+        const firstValue = signUpTrend[0];
+        const currentValue = signUpTrend[signUpTrend.length - 1];
+        const changePercent = ((currentValue - firstValue) / firstValue) * 100;
         const value = document.createElement("strong");
         value.className = "chart-value";
-        value.textContent = "62";
+        value.textContent = String(currentValue);
         const delta = document.createElement("span");
         delta.className = "chart-delta";
-        delta.textContent = "+12.0%";
+        delta.textContent = `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(1)}%`;
         valueRow.append(value, delta);
 
-        const chart = svgElement("svg", { class: "chart-svg", viewBox: "0 0 360 90", preserveAspectRatio: "none", role: "img", "aria-label": "Sign-ups increased over the last seven days" });
-        const area = svgElement("path", { class: "area", d: "M0 76 48 68 96 72 144 50 192 57 240 38 288 42 336 18 360 12V90H0Z" });
-        const line = svgElement("path", { class: "line", d: "M0 76 48 68 96 72 144 50 192 57 240 38 288 42 336 18 360 12" });
-        const point = svgElement("circle", { cx: "360", cy: "12", r: "4" });
+        const geometry = chartGeometry(signUpTrend);
+        const chart = svgElement("svg", { class: "chart-svg", viewBox: "0 0 360 90", preserveAspectRatio: "none", role: "img", "aria-label": `Sign-ups increased from ${firstValue} to ${currentValue} over the last seven days` });
+        const area = svgElement("path", { class: "area", d: geometry.area });
+        const line = svgElement("path", { class: "line", d: geometry.line });
+        const point = svgElement("circle", { cx: String(geometry.endpoint.x), cy: String(geometry.endpoint.y), r: "4" });
         chart.append(area, line, point);
 
         const footer = document.createElement("div");
@@ -533,7 +557,7 @@
         dateRange.textContent = "Sep 30 – Oct 6";
         const metric = document.createElement("span");
         metric.className = "chart-summary";
-        metric.textContent = "36 → 62 sign-ups";
+        metric.textContent = `${firstValue} → ${currentValue} sign-ups`;
         footer.append(dateRange, metric);
 
         card.append(header, valueRow, chart, footer);
@@ -619,6 +643,7 @@
 
       if (sharedRoute) {
         document.querySelector("main").dataset.testid = "shared-view";
+        document.querySelectorAll("main .chart-menu, main .resize-controls").forEach((control) => control.remove());
         document.querySelector("#shared-banner").hidden = false;
         document.querySelector("#edit-toolbar").hidden = true;
         document.querySelector("#charts-heading").textContent = "Shared charts";

@@ -16,8 +16,15 @@ Build once from the repository with `npm run build`, then run commands as `node 
 | `cleanup --mission <id> [--work-dir <path>] [--actor <name>]` | Release mission-scoped resources while preserving every run artifact. |
 | `reconcile --mission <id> --action retry-uncertain-stage\|accept-captured-artifacts [--work-dir <path>]` | Explicitly resolve an uncertain stage after inspecting its durable status. |
 | `mcp` | Start the local stdio MCP server. |
+| `capsule status` | Read the pinned runtime cache state without installing it. |
+| `capsule install` | Explicitly acquire and install the integrity-pinned standalone runtime. |
+| `capsule reconcile --action retry-failed-stage\|retry-uncertain-stage` | Explicitly recover the matching failed or uncertain install after inspecting its receipt. |
 
 The default work directory is `.demo-studio`. `prepare` prints the mission JSON, including the ID to reuse for later commands. For a complete example that safely captures that value into a shell variable, see the [quickstart](quickstart.md).
+
+Use `yarn exec demo-studio <command>` in a PnP consumer. Install its capsule explicitly before runtime commands. Once ready, doctor checks the configured software and optional narration requirements in that runtime; it never installs them. Conventional npm/source use can run the bundled runtime directly. Capsule recovery is separate from mission recovery and cannot approve or silently restart a video.
+
+Source checkouts that need capsule commands must also run `npm run pack:runtime` to generate the descriptor and runtime artifact. This is not required for ordinary source capture using the bundled runtime.
 
 `generate` includes media checks; there is no separate `audit` CLI command. The generated `review-packet.json` is evidence for a reviewer. It is distinct from the reviewer-authored `review.json` submitted after independent semantic review. `cleanup` does not delete captured video, screenshots, review records, or other artifacts.
 

@@ -78,6 +78,16 @@
           "selector": "#chart-card-weekly-sign-ups .chart-summary",
           "kind": "text",
           "value": "36 → 62 sign-ups"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups .chart-value",
+          "kind": "text",
+          "value": "62"
+        },
+        {
+          "selector": "#chart-card-weekly-sign-ups .chart-delta",
+          "kind": "text",
+          "value": "+72.2%"
         }
       ]
     },
