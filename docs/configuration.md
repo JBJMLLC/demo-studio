@@ -14,7 +14,7 @@ node dist/cli.js validate --plan examples/quickstart/plan.json
 
 The required fields and action formats are in the [plan reference](plan-format.md). The plan declares the target URL, viewport, scenes, and exact story wording. Keep provider credentials and service routing out of the plan unless a local-only provider explicitly requires a non-secret value there.
 
-Use a canonical `targetUrl` that serves the page directly. The built-in browser adapter blocks all HTTP redirects (even same-origin redirects), restricts HTTP(S) and WebSocket traffic to that exact origin, disables service workers, and does not permit popups. Keep required browser assets on the same origin; a CDN, external login, or streaming service needs a separately reviewed custom `BrowserAdapter`, not an allowlist override in the built-in adapter. See [adapter boundaries](adapters.md).
+Use a canonical `targetUrl` that serves the page directly. The built-in browser adapter blocks all HTTP redirects (even same-origin redirects), restricts HTTP(S) and WebSocket traffic to that exact origin, and disables service workers. Additional popup tabs are not recorded; plan the demonstration in one page. Keep required browser assets on the same origin; a CDN, external login, or streaming service needs a separately reviewed custom `BrowserAdapter`, not an allowlist override in the built-in adapter. See [adapter boundaries](adapters.md).
 
 ## Captioned output
 

@@ -28,6 +28,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+          cache-dependency-path: npm-shrinkwrap.json
 
       - name: Install media tools
         run: |

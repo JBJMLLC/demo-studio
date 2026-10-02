@@ -109,9 +109,10 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
     const initialResponse = await page.goto(plan.targetUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 });
     if (!initialResponse?.ok() || new URL(page.url()).origin !== new URL(plan.targetUrl).origin) throw new Error('Capture target readiness changed');
     assertBoundary();
+    await page.evaluate(async () => { await document.fonts.ready; await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))); });
     await page.mouse.move(pointer.x, pointer.y);
     await marker(page, 'main', 'start');
-    await sleep(180);
+    await sleep(350);
     for (const scene of plan.scenes) {
       activeSceneId = scene.id; activeActionId = null;
       const startMs = performance.now();

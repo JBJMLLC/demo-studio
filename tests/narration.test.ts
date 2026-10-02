@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { prepareNarration, reconcileNarrationPending } from '../src/narration.js';
@@ -47,7 +48,67 @@ function withVoiceboxEnvironment<T>(callback: () => Promise<T>): Promise<T> {
   });
 }
 
+async function serve(server: Server): Promise<string> {
+  await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Fixture did not listen');
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function closeServer(server: Server): Promise<void> {
+  server.closeAllConnections();
+  await new Promise<void>((done) => server.close(() => done()));
+}
+
 describe('narration preparation and reconciliation', () => {
+  it.each(['/generate', '/history/generation-123', '/audio/generation-123'])('never follows Voicebox redirects from %s or silently repeats submitted speech', async (redirectPath) => {
+    const root = scratch();
+    const missionDirectory = join(root, 'mission');
+    mkdirSync(missionDirectory, { recursive: true });
+    let outsideRequests = 0, generations = 0;
+    const outside = createServer((_request, response) => { outsideRequests++; response.end('not permitted'); });
+    const outsideUrl = await serve(outside);
+    const local = createServer((request, response) => {
+      if (request.url === '/generate') generations++;
+      if (request.url === redirectPath) { response.writeHead(307, { location: `${outsideUrl}/destination` }); response.end(); return; }
+      response.setHeader('content-type', 'application/json');
+      response.end(JSON.stringify({ id: 'generation-123', profile_id: 'local-profile', text: 'A measured sentence.', status: request.url === '/generate' && redirectPath.includes('/history/') ? 'pending' : 'completed' }));
+    });
+    const localUrl = await serve(local);
+    try {
+      await withVoiceboxEnvironment(async () => {
+        process.env.DEMO_STUDIO_VOICEBOX_URL = localUrl;
+        const plan = narratedPlan('voicebox');
+        await expect(prepareNarration(plan, missionDirectory, { wait: async () => undefined })).rejects.toMatchObject({ name: 'ExternalOutcomeUnknownError' });
+        await expect(prepareNarration(plan, missionDirectory)).rejects.toMatchObject({ name: 'ExternalOutcomeUnknownError' });
+      });
+      expect(generations).toBe(1);
+      expect(outsideRequests).toBe(0);
+    } finally { await closeServer(local); await closeServer(outside); }
+  });
+
+  it.each(['/history/generation-123', '/audio/generation-123'])('keeps reconciliation unknown without following redirects from %s', async (redirectPath) => {
+    const missionDirectory = scratch();
+    writeJsonAtomic(join(missionDirectory, 'narration-pending/intro.json'), {
+      schemaVersion: 1, provider: 'voicebox', inputHash: sha256Of('input'), generationId: 'generation-123', profileId: 'local-profile',
+      sceneId: 'intro', textSha256: sha256Of('A measured sentence.'), outputPath: 'narration/intro.wav',
+    });
+    let outsideRequests = 0;
+    const outside = createServer((_request, response) => { outsideRequests++; response.end(); });
+    const outsideUrl = await serve(outside);
+    const local = createServer((request, response) => {
+      if (request.url === redirectPath) { response.writeHead(308, { location: `${outsideUrl}/destination` }); response.end(); return; }
+      response.setHeader('content-type', 'application/json');
+      response.end(JSON.stringify({ id: 'generation-123', profile_id: 'local-profile', text: 'A measured sentence.', status: 'completed' }));
+    });
+    const baseUrl = await serve(local);
+    try {
+      expect((await reconcileNarrationPending(missionDirectory, 'intro', { baseUrl })).status).toBe('unknown');
+      expect(outsideRequests).toBe(0);
+      expect(readFileSync(join(missionDirectory, 'narration-pending/intro.json'), 'utf8')).toContain('generation-123');
+    } finally { await closeServer(local); await closeServer(outside); }
+  });
+
   it('hashes supplied source bytes before cache reuse and rejects paths outside the plan directory', async () => {
     const root = scratch();
     const planDirectory = join(root, 'plans');

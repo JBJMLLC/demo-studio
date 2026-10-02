@@ -74,5 +74,5 @@ try {
     assert.equal((await stat(video)).mtimeMs, originalMtime, 'Cleanup deleted or changed retained media');
   }
   JSON.parse(await readFile(resolve(missionDir, 'render/timeline.json'), 'utf8'));
-  process.stdout.write(`Capture, render, sampled review, restart reuse and non-destructive cleanup passed.\nArtifact directory: ${directory}\n`);
+  process.stdout.write(`Capture, render, sampled review and restart reuse passed. ${process.env.DEMO_STUDIO_SMOKE_KEEP_REVIEW === '1' ? 'Mission retained for independent review.' : 'Non-destructive cleanup passed.'}\nArtifact directory: ${directory}\n`);
 } finally { if (client) await client.close(); fixture.kill('SIGTERM'); }

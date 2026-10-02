@@ -56,7 +56,7 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
       return { url: media.urls.get(missionPath(missionDir, track.path, true))!, startFrame: Math.round(scene.audio.startMs * plan.fps / 1000), frames: Math.ceil(track.durationMs * plan.fps / 1000) };
     });
     const durationInFrames = Math.ceil(Math.max(capture.durationMs * plan.fps / 1000, ...audio.map((track) => track.startFrame + track.frames + plan.fps)));
-    const captionBandHeight = plan.presentation.captions ? Math.max(72, Math.round(capture.height * .08)) : 0;
+    const captionBandHeight = plan.presentation.captions ? Math.min(Math.max(72, Math.round(capture.height * .08)), Math.floor(capture.height * .2)) : 0;
     const props: VideoProps = { recordingUrl: media.urls.get(recording)!, width: capture.width, height: capture.height, durationInFrames, audio, captionBandHeight, captions: plan.presentation.captions ? capture.scenes.flatMap((scene) => captionChunks(plan.scenes.find((entry) => entry.id === scene.id)!.say, Math.round(scene.startMs * plan.fps / 1000), Math.round(scene.endMs * plan.fps / 1000))) : [] };
     const nearby = fileURLToPath(new URL('./composition.js', import.meta.url));
     const source = fileURLToPath(new URL('./composition.tsx', import.meta.url));

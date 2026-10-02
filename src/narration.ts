@@ -73,7 +73,7 @@ export async function reconcileNarrationPending(
   const fetchImpl = options.fetchImpl ?? fetch;
   let response: Response;
   try {
-    response = await fetchImpl(`${base.origin}/history/${encodeURIComponent(pending.generationId)}`, { signal: AbortSignal.timeout(10_000) });
+    response = await fetchImpl(`${base.origin}/history/${encodeURIComponent(pending.generationId)}`, { redirect: 'error', signal: AbortSignal.timeout(10_000) });
   } catch {
     return { status: 'unknown', sceneId };
   }
@@ -87,7 +87,7 @@ export async function reconcileNarrationPending(
   }
   if (['loading_model', 'pending', 'queued', 'generating'].includes(state.status)) return { status: 'pending', sceneId };
   if (state.status !== 'completed') return { status: 'failed', sceneId };
-  try { response = await fetchImpl(`${base.origin}/audio/${encodeURIComponent(pending.generationId)}`, { signal: AbortSignal.timeout(10_000) }); }
+  try { response = await fetchImpl(`${base.origin}/audio/${encodeURIComponent(pending.generationId)}`, { redirect: 'error', signal: AbortSignal.timeout(10_000) }); }
   catch { return { status: 'unknown', sceneId }; }
   if (!response.ok) return { status: response.status >= 500 ? 'pending' : 'unknown', sceneId };
   const audio = Buffer.from(await response.arrayBuffer());
@@ -292,6 +292,7 @@ async function synthesizeElevenLabs(text: string, config: NarratorConfig, fetchI
   try {
     response = await fetchImpl(endpoint, {
       method: 'POST',
+      redirect: 'error',
       headers: { 'content-type': 'application/json', 'xi-api-key': apiKey },
       body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { speed: 1 } }),
       signal: AbortSignal.timeout(maxProviderRequestMs),
@@ -336,6 +337,7 @@ async function synthesizeVoicebox(
   const origin = endpoint.origin;
   const safeFetch = (url: string | URL, init?: RequestInit) => fetchImpl(url, {
     ...init,
+    redirect: 'error',
     signal: init?.signal ?? AbortSignal.timeout(maxProviderRequestMs),
   });
 

@@ -13,6 +13,8 @@ The bundled quickstart uses synthetic data and serves the fixture on loopback (`
 
 Voice generation, if selected, can send approved script text to the chosen provider. Optional environment settings are `ELEVENLABS_API_KEY`, `DEMO_STUDIO_ELEVENLABS_VOICE_ID`, `DEMO_STUDIO_ELEVENLABS_BASE_URL`, `DEMO_STUDIO_VOICEBOX_PROFILE_ID`, and `DEMO_STUDIO_VOICEBOX_URL`. Review that provider's current privacy, retention, and licensing terms before use. You may instead use a locally supplied recording. Keep voice files private unless the speaker has authorized their inclusion and distribution.
 
+Voicebox is restricted to a configured loopback origin. Both built-in voice providers reject HTTP redirects rather than forwarding script text or credentials to another destination. If a submitted generation becomes uncertain, its receipt remains unknown until explicit reconciliation; it is not silently submitted again.
+
 Optional video-composition dependencies may carry terms separate from this project's MIT license. Verify the exact installed version and intended use before commercial distribution; see [third-party notices](../THIRD_PARTY_NOTICES.md).
 
 Do not place secrets in JSON plans, `.mcp.json`, shell arguments, source files, or audit output. Keep provider keys in the approved local secret mechanism and never print them in diagnostics.

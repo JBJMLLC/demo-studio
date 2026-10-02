@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const entryPoints = [
-  "package.json", "package-lock.json", ".mcp.json", ".claude-plugin", ".github",
+  "package.json", "package-lock.json", "npm-shrinkwrap.json", ".mcp.json", ".claude-plugin", ".github",
   ".gitignore", ".npmignore", "tsconfig.json", "vitest.config.ts", "playwright.config.ts",
   "skills", "docs", "schemas", "examples", "scripts", "src", "tests", "test", "dist",
   "README.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE", "THIRD_PARTY_NOTICES.md",

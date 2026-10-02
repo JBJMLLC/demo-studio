@@ -59,10 +59,9 @@ DEMO_MISSION_ID="$(node dist/cli.js prepare --plan examples/quickstart/plan.json
 node dist/cli.js generate --mission "$DEMO_MISSION_ID" --work-dir .demo-studio/quickstart
 node dist/cli.js status --mission "$DEMO_MISSION_ID" --work-dir .demo-studio/quickstart
 node dist/cli.js preview --mission "$DEMO_MISSION_ID" --work-dir .demo-studio/quickstart
-node dist/cli.js cleanup --mission "$DEMO_MISSION_ID" --work-dir .demo-studio/quickstart
 ```
 
-`generate` records the real browser interactions and includes media checks. The generated `review-packet.json` is evidence, not approval. An independent semantic reviewer must author a separate exact-hash `review.json`; no ready-to-submit review is generated. Cleanup releases mission-scoped resources while preserving every run artifact. The example adds a populated chart, widens it, then opens a read-only share view.
+`generate` records the real browser interactions and includes media checks. The generated `review-packet.json` is evidence, not approval. An independent semantic reviewer must author a separate exact-hash `review.json`; no ready-to-submit review is generated. Submit that review before running `cleanup`, which closes the mission while preserving every run artifact. See the [review commands](docs/quickstart.md). The example adds a populated chart, widens it, then opens a read-only share view.
 
 For the project layout, exact commands, plan fields, privacy defaults, and repair steps, see the [documentation index](docs/index.md). The six skills and their boundaries are listed in [the skills guide](docs/skills.md).
 
