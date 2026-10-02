@@ -11,7 +11,7 @@ import type { CaptureResult, DemoPlan, NarrationResult, RenderResult } from './s
 import type { VideoProps } from './composition.js';
 import { missionPath } from './store.js';
 import { writeJsonAtomic } from './store.js';
-import { fileHash, mediaInfo, runBinary } from './media.js';
+import { fileHash, mediaInfo, runBinary, MediaIntegrityError, verifyFirstFrameIntegrity } from './media.js';
 
 /** Only explicitly admitted media files are served. No directory browsing or path translation. */
 export async function serveMedia(files: string[]) {
@@ -66,6 +66,13 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     await renderMedia({ composition, serveUrl, codec: 'h264', outputLocation: videoPath, inputProps: props, browserExecutable: chromium.executablePath(), concurrency: 2, overwrite: true, onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }) });
     const info = await mediaInfo(videoPath);
     if (Math.abs(info.durationMs - durationInFrames / plan.fps * 1000) > 100 || info.width !== capture.width || info.height !== capture.height || info.hasAudio !== (audio.length > 0)) throw new Error('Final media does not match its composition');
+    try {
+      const firstFrame = await verifyFirstFrameIntegrity(recording, videoPath, capture.width, capture.height, captionBandHeight);
+      writeJsonAtomic(resolve(directory, 'first-frame-integrity.json'), { schemaVersion: 1, ...firstFrame });
+    } catch (error) {
+      if (error instanceof MediaIntegrityError) writeJsonAtomic(resolve(directory, 'first-frame-integrity.json'), { schemaVersion: 1, pass: false, code: error.code, threshold: error.threshold, ...(error.score === undefined ? {} : { score: error.score }) });
+      throw error;
+    }
     const points = new Set<number>([0, Math.max(0, info.durationMs - 100)]);
     for (let ms = 0; ms < info.durationMs; ms += 2000) points.add(ms);
     for (const event of capture.events) for (const delta of [-250, 0, 500]) points.add(Math.min(Math.max(0, event.atMs + delta), info.durationMs - 100));

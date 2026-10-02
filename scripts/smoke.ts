@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
+import { appendFile, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -26,7 +26,7 @@ fixture.stdout.on('data', () => { fixtureReady = true; });
 fixture.stderr.on('data', () => undefined);
 const connect = async () => {
   const client = new Client({ name: 'standalone-smoke', version: '0.1.0' });
-  await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve('dist/mcp.js')], stderr: 'pipe' }));
+  await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve(process.env.DEMO_STUDIO_MCP_ENTRY || 'dist/mcp.js')], stderr: 'pipe' }));
   return client;
 };
 const readResult = (value: unknown) => {
@@ -53,6 +53,7 @@ try {
   assert.equal(result.mission.status, 'awaiting-review');
   assert.notEqual(result.audit.status, 'fail');
   const missionDir = resolve(directory, 'missions', prepared.missionId);
+  if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, `mission_directory=${missionDir}\n`);
   const video = resolve(missionDir, result.render.videoPath);
   const info = await mediaInfo(video);
   assert.equal(info.width, 1440); assert.equal(info.height, 900);

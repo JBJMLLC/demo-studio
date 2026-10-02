@@ -1,5 +1,5 @@
 import React from 'react';
-import { AbsoluteFill, Audio, Composition, Sequence, Video, registerRoot, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, Composition, Sequence, OffthreadVideo, registerRoot, useCurrentFrame } from 'remotion';
 
 export type VideoProps = {
   recordingUrl: string;
@@ -15,7 +15,7 @@ const DemoVideo: React.FC<VideoProps> = (props) => {
   const frame = useCurrentFrame();
   const caption = props.captions.find((entry) => frame >= entry.startFrame && frame < entry.endFrame);
   return <AbsoluteFill style={{ backgroundColor: '#f5f7fb' }}>
-    <Video src={props.recordingUrl} muted playbackRate={1} style={{ width: '100%', height: `calc(100% - ${props.captionBandHeight}px)`, objectFit: 'contain' }} />
+    <OffthreadVideo src={props.recordingUrl} muted playbackRate={1} style={{ width: '100%', height: `calc(100% - ${props.captionBandHeight}px)`, objectFit: 'contain' }} />
     {props.audio.map((track) => <Sequence key={track.url} from={track.startFrame} durationInFrames={track.frames}>
       <Audio src={track.url} playbackRate={1} />
     </Sequence>)}

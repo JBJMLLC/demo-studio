@@ -52,15 +52,21 @@ export async function checkTargetReady(plan: DemoPlan) {
   } finally { await browser.close(); }
 }
 
-async function move(page: Page, from: Point, to: Point, duration = 380) {
-  const steps = 15;
-  const started = performance.now();
-  for (let step = 1; step <= steps; step++) {
-    const t = step / steps;
-    const eased = 1 - (1 - t) ** 3;
+export async function move(page: Pick<Page, 'mouse'>, from: Point, to: Point, duration = 380, clock = { now: () => performance.now(), sleep }) {
+  const started = clock.now();
+  let commandLatency = 0;
+  while (clock.now() < started + duration) {
+    // Choose position from elapsed time, not a backlog of fixed steps. On a
+    // busy recorder, obsolete steps must not turn a short move into a creep.
+    const t = Math.min(1, (clock.now() - started + Math.max(25, commandLatency)) / duration);
+    const eased = t * t * (3 - 2 * t);
+    const commandStarted = clock.now();
     await page.mouse.move(from.x + (to.x - from.x) * eased, from.y + (to.y - from.y) * eased);
-    await sleep(Math.max(0, started + duration * step / steps - performance.now()));
+    commandLatency = clock.now() - commandStarted;
+    if (t === 1) return;
+    await clock.sleep(Math.max(0, Math.min(25, started + duration - clock.now())));
   }
+  await page.mouse.move(to.x, to.y);
 }
 
 async function center(locator: Locator): Promise<Point> {
@@ -137,6 +143,9 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
           if (action.type === 'click' && (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer))) throw new Error('Click target is disabled or occluded');
           await sleep(Math.max(0, Math.max(readableHoverUntil, actionTime ?? readableHoverUntil) - performance.now()));
         }
+        // A target can be replaced or covered during the authored hover. Check
+        // again at dispatch, recording any guard latency rather than hiding it.
+        if (action.type === 'click' && (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer))) throw new Error('Click target is disabled or occluded');
         const atMs = performance.now();
         switch (action.type) {
           case 'navigate': {
