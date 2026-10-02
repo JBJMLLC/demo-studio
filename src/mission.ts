@@ -209,7 +209,8 @@ export async function generate(missionId: string, workDirectory: string, depende
         mission.failureCode = unknown ? 'external-outcome-unknown' : 'capture-failed';
         mission.currentStage = 'capture';
         writeMission(directory, mission, now);
-        throw new Error(`Capture did not reach a verified receipt (${mission.failureCode})`);
+        // The cause stays in memory for the caller; receipts never serialize it.
+        throw new Error(`Capture did not reach a verified receipt (${mission.failureCode})`, { cause: error });
       }
     }
 
@@ -242,13 +243,13 @@ export async function generate(missionId: string, workDirectory: string, depende
         mission.artifacts.posterPath = render.posterPath;
         mission.artifacts.timelinePath = render.timelinePath;
         mission.artifacts.sampledFrames = render.sampledFrames;
-      } catch {
+      } catch (error) {
         failStage(mission, 'render', 'render-failed', false, now().toISOString());
         mission.status = 'failed';
         mission.failureCode = 'render-failed';
         mission.currentStage = 'render';
         writeMission(directory, mission, now);
-        throw new Error('Render did not reach a verified receipt (render-failed)');
+        throw new Error('Render did not reach a verified receipt (render-failed)', { cause: error });
       }
     }
 
