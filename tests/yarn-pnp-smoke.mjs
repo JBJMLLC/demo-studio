@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
@@ -37,7 +38,18 @@ const packageManifestFromArchive = (compressed) => {
 
 const directory = await realpath(await mkdtemp(join(tmpdir(), 'demo-studio-yarn-pnp-')));
 const cache = join(directory, '.yarn', 'cache');
-const environment = { ...process.env, YARN_ENABLE_GLOBAL_CACHE: 'false', YARN_CACHE_FOLDER: cache };
+// Yarn's public-PR hardened mode enables immutable installs by default. This
+// consumer is freshly generated and intentionally has no lockfile yet, so
+// permit Yarn to create only its temporary lockfile; leave hardened metadata
+// checks and the repository's source lockfile untouched.
+const environment = {
+  ...process.env,
+  YARN_ENABLE_GLOBAL_CACHE: 'false',
+  YARN_CACHE_FOLDER: cache,
+  YARN_ENABLE_IMMUTABLE_INSTALLS: 'false',
+};
+const sourceFiles = [new URL('../npm-shrinkwrap.json', import.meta.url), new URL('../src/index.ts', import.meta.url)];
+const sourceSnapshots = await Promise.all(sourceFiles.map(async (path) => [path, await readFile(path)]));
 const packageManifest = packageManifestFromArchive(await readFile(archive));
 const dependencies = packageManifest.dependencies;
 if (!dependencies?.['@modelcontextprotocol/sdk'] || !dependencies.zod || !dependencies['zod-to-json-schema'] || !dependencies.react || !dependencies['react-dom']) {
@@ -60,13 +72,18 @@ const manifest = {
 };
 
 try {
+  assert.deepEqual(await readdir(directory), [], 'The generated consumer must start without a lockfile or package-manager state.');
   await writeFile(join(directory, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`, { mode: 0o600 });
   await writeFile(join(directory, '.yarnrc.yml'), 'nodeLinker: pnp\n', { mode: 0o600 });
   run('corepack', [`yarn@${yarnVersion}`, 'install'], directory, environment);
+  assert((await readdir(directory)).includes('yarn.lock'), 'Yarn must create a lockfile only in the generated temporary consumer.');
   await writeFile(join(directory, 'smoke.mjs'), await readFile(new URL('./yarn-pnp-consumer.mjs', import.meta.url), 'utf8'), { mode: 0o600 });
   run('corepack', [`yarn@${yarnVersion}`, 'node', 'smoke.mjs'], directory, environment);
   process.stdout.write(`Yarn PnP archive import, SDK/Zod peer compatibility, and MCP tool discovery passed (${yarnVersion}).\n`);
 } finally {
+  for (const [path, contents] of sourceSnapshots) {
+    assert.deepEqual(await readFile(path), contents, `The Yarn PnP smoke must not modify ${path.pathname}.`);
+  }
   if (process.env.DEMO_STUDIO_KEEP_YARN_PNP === '1') process.stderr.write(`Retained temporary consumer: ${directory}\n`);
   else await rm(directory, { recursive: true, force: true });
 }
