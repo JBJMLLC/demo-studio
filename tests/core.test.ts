@@ -91,7 +91,7 @@ function makeAdapters(plan: DemoPlan, missionDirectory: string) {
 describe('public plan and durable mission core', () => {
   it('requires strict authored wording, matching approval hashes, and spoken anchors for active narrated actions', () => {
     const plan = makePlan();
-    expect(plan.presentation).toEqual({ cursor: 'pointer', captions: true });
+    expect(plan.presentation).toEqual({ cursor: 'pointer', captions: true, zoom: 1 });
     expect(plan.fps).toBe(30);
     expect(() => planSchema.parse({ ...plan, privateBrand: 'not allowed' })).toThrow();
 

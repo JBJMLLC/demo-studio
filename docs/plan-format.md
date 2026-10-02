@@ -10,7 +10,7 @@ The plan is the durable source for one walkthrough. The runtime validates its sh
 | `id`, `title` | Stable run identifier and human-readable outcome. |
 | `product`, `audience`, `outcome` | Product surface, intended viewer, and one primary result. |
 | `mode` | Required output mode: `captioned` for the no-provider path or `narrated` with a configured narrator. |
-| `presentation` | Cursor and caption settings, for example `{"cursor":"pointer","captions":true}`. |
+| `presentation` | Cursor, caption and zoom settings, for example `{"cursor":"pointer","captions":true,"zoom":1.6}`. `zoom` (1–3, default 1 = off) eases the camera toward each click, typing and drag, and pans between actions that are close together. |
 | `duration` | An editorial target and whether it is a hard limit, for example `{"targetSeconds":35,"hardLimit":false}`. |
 | `targetUrl` | Exact app URL. Use the included loopback fixture for the quickstart. |
 | `viewport` | Capture width and height in CSS pixels. |

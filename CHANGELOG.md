@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Render with Remotion's pinned Chrome Headless Shell instead of Playwright's Chromium. Current full Chromium builds return tiled, mis-scaled frames, which failed the first-frame integrity check.
+- Add `presentation.zoom` (1–3, default off): the camera eases toward each click, typing and drag, and pans between nearby actions. The zoom windows are recorded in `render/timeline.json`.
+- Letterbox the recording and caption band in black instead of light gray.
+
 ## 0.1.2
 
 - Add an integrity-pinned conventional runtime capsule and PnP-safe host exports/stdio launcher, with explicit install and retry reconciliation.

@@ -56,7 +56,7 @@ export async function verifyFirstFrameIntegrity(
 
   const browserHeight = height - captionBandHeight;
   const filter = [
-    `[0:v:0]trim=end_frame=1,scale=${width}:${browserHeight}:force_original_aspect_ratio=decrease,pad=${width}:${browserHeight}:(ow-iw)/2:(oh-ih)/2:color=0xf5f7fb,format=yuv444p,gblur=sigma=1.5,settb=AVTB,setpts=PTS-STARTPTS[reference]`,
+    `[0:v:0]trim=end_frame=1,scale=${width}:${browserHeight}:force_original_aspect_ratio=decrease,pad=${width}:${browserHeight}:(ow-iw)/2:(oh-ih)/2:color=black,format=yuv444p,gblur=sigma=1.5,settb=AVTB,setpts=PTS-STARTPTS[reference]`,
     `[1:v:0]trim=end_frame=1,format=yuv444p,crop=${width}:${browserHeight}:0:0,gblur=sigma=1.5,settb=AVTB,setpts=PTS-STARTPTS[rendered]`,
     '[reference][rendered]ssim=shortest=1[comparison]',
   ].join(';');

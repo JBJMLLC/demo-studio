@@ -12,6 +12,8 @@ export const pointSchema = z.object({
 export const presentationSchema = z.object({
   cursor: z.enum(['pointer', 'circle', 'hidden']).default('pointer'),
   captions: z.boolean().default(true),
+  /** Camera zoom toward clicks and typing; 1 keeps the full frame. */
+  zoom: z.number().min(1).max(3).default(1),
 }).strict().default({});
 
 export const actionSchema = z.object({
