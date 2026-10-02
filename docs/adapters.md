@@ -16,6 +16,8 @@ The built-in browser adapter is deliberately origin-isolated: HTTP(S) requests a
 
 ## Implement an adapter
 
+The built-in target check hashes the successful document, title, status, and viewport. It cannot infer a live application's release, authentication, asynchronous report data, or fixture revision. For dynamic applications, your `EnvironmentAdapter` must verify those prerequisites and include their immutable fingerprints in `evidenceHash`; otherwise reuse can only attest the document, not changed backend data. Keep credentials and raw fixture content out of receipts.
+
 Import the public types from the package entry point, implement only the boundary you own, and keep provider credentials in your host's secret manager or environment—not in a plan or receipt. For example, a custom browser adapter should:
 
 1. enforce a reviewed origin policy and the plan's requested viewport;
