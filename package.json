@@ -12,7 +12,7 @@
     "./contracts": "./dist/contracts.js",
     "./media-clock": "./dist/media-clock.js"
   },
-  "files": ["dist", "src/composition.tsx", "skills", "schemas", "docs", "examples", "scripts", ".claude-plugin", ".mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+  "files": ["dist", "src/composition.tsx", "skills", "schemas", "docs", "examples", "scripts", ".claude-plugin", ".mcp.json", "npm-shrinkwrap.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
