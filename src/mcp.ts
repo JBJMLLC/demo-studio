@@ -9,6 +9,7 @@ import { doctor } from './doctor.js';
 import { prepareDemo, generateDemo, getStatus, cleanup, submitReview, reconcile } from './runtime.js';
 import { missionDirectory, missionPath, readJson } from './store.js';
 import type { ReviewSubmission } from './contracts.js';
+import { packageVersion } from './version.js';
 
 const path = z.string().min(1).max(4096);
 const missionId = z.string().regex(/^demo-[a-f0-9]{24}$/);
@@ -17,7 +18,7 @@ const work = { workDir: path.default('.demo-studio') };
 const output = (value: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(value) }] });
 
 export function createMcpServer() {
-  const server = new Server({ name: 'demo-studio', version: '0.1.0' }, { capabilities: { tools: {} } });
+  const server = new Server({ name: 'demo-studio', version: packageVersion }, { capabilities: { tools: {} } });
   const jobs = new Map<string, Promise<unknown>>();
   const definitions: Array<{ name: string; description: string; inputSchema: Record<string, unknown>; annotations?: { readOnlyHint: boolean } }> = [];
   const handlers = new Map<string, (input: unknown) => Promise<ReturnType<typeof output>>>();

@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { mediaInfo } from '../src/media.js';
+import { packageVersion } from '../src/version.js';
 
 const directory = await mkdtemp(resolve(tmpdir(), 'demo-studio-smoke-'));
 const probe = createServer();
@@ -25,7 +26,7 @@ let fixtureReady = false;
 fixture.stdout.on('data', () => { fixtureReady = true; });
 fixture.stderr.on('data', () => undefined);
 const connect = async () => {
-  const client = new Client({ name: 'standalone-smoke', version: '0.1.0' });
+  const client = new Client({ name: 'standalone-smoke', version: packageVersion });
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [resolve(process.env.DEMO_STUDIO_MCP_ENTRY || 'dist/mcp.js')], stderr: 'pipe' }));
   return client;
 };

@@ -51,12 +51,19 @@ jobs:
         run: npm run build
 
       - name: Install the production release archive
+        id: pack
         run: |
           mkdir -p "$RUNNER_TEMP/demo-studio-release" "$RUNNER_TEMP/demo-studio-production"
-          npm pack --pack-destination "$RUNNER_TEMP/demo-studio-release"
-          node scripts/check-public-boundary.mjs --archive "$RUNNER_TEMP/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz"
-          npm install --prefix "$RUNNER_TEMP/demo-studio-production" --omit=dev "$RUNNER_TEMP/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz"
+          npm pack --pack-destination "$RUNNER_TEMP/demo-studio-release" --json > "$RUNNER_TEMP/demo-studio-pack.json"
+          archive_name="$(node -e 'const packed = require(process.argv[1]); if (packed.length !== 1 || !packed[0].filename) process.exit(1); process.stdout.write(packed[0].filename)' "$RUNNER_TEMP/demo-studio-pack.json")"
+          echo "archive_name=$archive_name" >> "$GITHUB_OUTPUT"
+          archive_path="$RUNNER_TEMP/demo-studio-release/$archive_name"
+          node scripts/check-public-boundary.mjs --archive "$archive_path"
+          npm install --prefix "$RUNNER_TEMP/demo-studio-production" --omit=dev "$archive_path"
           "$RUNNER_TEMP/demo-studio-production/node_modules/.bin/demo-studio" doctor
+
+      - name: Verify the production archive with Yarn Plug'n'Play
+        run: node tests/yarn-pnp-smoke.mjs "$RUNNER_TEMP/demo-studio-release/${{ steps.pack.outputs.archive_name }}"
 
       - name: Smoke test the installed runtime with the synthetic fixture
         id: smoke
@@ -95,7 +102,7 @@ jobs:
           name: production-archive-node-${{ matrix.node-version }}
           retention-days: 7
           if-no-files-found: error
-          path: ${{ runner.temp }}/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz
+          path: ${{ runner.temp }}/demo-studio-release/${{ steps.pack.outputs.archive_name }}
 
       - name: Validate skills
         run: node scripts/check-skills.mjs

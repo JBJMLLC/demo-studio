@@ -1,12 +1,12 @@
 {
   "name": "@jbjmllc/demo-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@jbjmllc/demo-studio",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "MIT",
       "dependencies": {
         "@modelcontextprotocol/sdk": "1.31.0",
@@ -16,7 +16,7 @@
         "react": "19.0.0",
         "react-dom": "19.0.0",
         "remotion": "4.0.532",
-        "zod": "3.24.2",
+        "zod": "3.25.76",
         "zod-to-json-schema": "3.24.5"
       },
       "bin": {
@@ -5714,9 +5714,9 @@
       "license": "ISC"
     },
     "node_modules/zod": {
-      "version": "3.24.2",
-      "resolved": "https://registry.npmjs.org/zod/-/zod-3.24.2.tgz",
-      "integrity": "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==",
+      "version": "3.25.76",
+      "resolved": "https://registry.npmjs.org/zod/-/zod-3.25.76.tgz",
+      "integrity": "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==",
       "license": "MIT",
       "funding": {
         "url": "https://github.com/sponsors/colinhacks"
