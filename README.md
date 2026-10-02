@@ -6,7 +6,7 @@ The six skills are composable and work one at a time. The local toolchain suppli
 
 ## Example output
 
-The [captioned Fieldnote walkthrough](https://github.com/JBJMLLC/demo-studio/releases/download/v0.1.1/fieldnote-demo.mp4) records adding a populated chart, widening it, and opening a read-only share view. It uses an original fictional app and synthetic records, with no credentials or voice recording. [Release assets](https://github.com/JBJMLLC/demo-studio/releases) include compiled archives, the video, poster, checksums, and an independent review summary. The example is captioned, not narrated; optional speech uses your own authorized recordings or provider configuration.
+The [captioned Fieldnote walkthrough](https://github.com/JBJMLLC/demo-studio/releases/download/v0.1.2/fieldnote-demo.mp4) records adding a populated chart, widening it, and opening a read-only share view. It uses an original fictional app and synthetic records, with no credentials or voice recording. [Release assets](https://github.com/JBJMLLC/demo-studio/releases) include compiled archives, the video, poster, checksums, and an independent review summary. The example is captioned, not narrated; optional speech uses your own authorized recordings or provider configuration.
 
 ## Install a skill
 
@@ -106,7 +106,7 @@ yarn exec demo-studio doctor
 yarn exec demo-studio mcp
 ```
 
-Installation is explicit. Doctor never downloads or repairs a runtime. Cache reuse requires matching artifact identity, owned installed bytes, Node ABI, OS, and architecture. Failed or uncertain installs require inspection and explicit reconciliation.
+Installation is explicit. Doctor never downloads or repairs a runtime. Cache reuse requires matching artifact identity, owned installed bytes, Node ABI, OS, architecture, and Linux libc where applicable. Failed or uncertain installs require inspection and explicit reconciliation.
 
 Source clones and conventional npm installations can use the bundled runtime directly. Advanced adapter embedding uses `@jbjmllc/demo-studio/runtime` in a conventional `node_modules` installation; PnP applications use [stdio MCP](docs/mcp.md). See [configuration](docs/configuration.md), [adapters](docs/adapters.md), and [troubleshooting](docs/troubleshooting.md).
 
