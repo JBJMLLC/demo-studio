@@ -13,4 +13,5 @@ it('refuses generation from a preparation made with a different runtime implemen
   });
   expect(runtimeFingerprint()).toMatch(/^playwright-remotion-native-v1:[a-f0-9]{64}$/);
   await expect(generateDemo(receipt.missionId, directory, 'test-producer')).rejects.toThrow('Runtime changed');
+  await expect(generateDemo(`demo-${'0'.repeat(24)}`, directory, 'test-producer')).rejects.toThrow('preparation is missing');
 });

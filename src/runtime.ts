@@ -22,6 +22,6 @@ export function prepareDemo(planPath: string, workDir: string, actorId: string) 
 }
 export async function generateDemo(missionId: string, workDir: string, actorId: string) {
   const receipt = await getStatus(missionId, workDir);
-  if (receipt.runtimeProfileHash !== sha256Of(runtimeFingerprint())) throw new Error('Runtime changed after preparation; prepare again before generation');
+  if (receipt.status === 'missing' || receipt.runtimeProfileHash !== sha256Of(runtimeFingerprint())) throw new Error('Runtime changed or preparation is missing; prepare again before generation');
   return generate(missionId, workDir, { actorId, capture, render });
 }
