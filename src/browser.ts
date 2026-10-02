@@ -125,8 +125,11 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
         const locator = action.selector ? page.locator(action.selector) : undefined;
         const target = locator ? await center(locator) : pointer;
         const approach = ['click', 'type', 'drag'].includes(action.type) ? 380 : 0;
-        if (action.atMs !== undefined) await sleep(Math.max(0, startMs + action.atMs - approach - 140 - performance.now()));
-        if (approach) { await move(page, pointer, target, approach); pointer = target; await sleep(140); }
+        // Reserve a readable hover and protocol-latency headroom before the
+        // authored action time. Slow commands must not shift every later click.
+        const actionTime = action.atMs === undefined ? undefined : startMs + action.atMs;
+        if (actionTime !== undefined) await sleep(Math.max(0, actionTime - approach - (approach ? 300 : 0) - performance.now()));
+        if (approach) { await move(page, pointer, target, approach); pointer = target; await sleep(Math.max(140, (actionTime ?? performance.now() + 140) - performance.now())); }
         const atMs = performance.now();
         switch (action.type) {
           case 'navigate': {
@@ -140,10 +143,16 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
             if (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer)) throw new Error('Click target is disabled or occluded');
             await page.mouse.click(pointer.x, pointer.y); break;
           }
-          case 'type':
+          case 'type': {
             await locator!.focus(); await locator!.fill('');
-            for (const char of action.value || '') await page.keyboard.insertText(char).then(() => sleep(150 + (char.charCodeAt(0) % 55)));
+            let nextCharacterAt = performance.now();
+            for (const char of action.value || '') {
+              await page.keyboard.insertText(char);
+              nextCharacterAt += 150 + (char.charCodeAt(0) % 55);
+              await sleep(Math.max(0, nextCharacterAt - performance.now()));
+            }
             break;
+          }
           case 'drag': {
             const destination = await center(page.locator(action.toSelector!));
             await page.mouse.down(); await move(page, pointer, destination, 600); await page.mouse.up(); pointer = destination; break;

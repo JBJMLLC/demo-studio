@@ -49,7 +49,7 @@ try {
   const prepared = await call('demo_prepare', { planPath, workDir: directory });
   assert.equal(prepared.status, 'prepared');
   const result = await call('demo_generate', { missionId: prepared.missionId, workDir: directory, wait: true });
-  if (result.mission.status !== 'awaiting-review') process.stdout.write(`${JSON.stringify({ status: result.mission.status, failureStage: result.mission.currentStage, failureCode: result.mission.failureCode, findings: result.audit?.findings })}\n`);
+  if (result.mission.status !== 'awaiting-review') process.stdout.write(`${JSON.stringify({ status: result.mission.status, failureStage: result.mission.currentStage, failureCode: result.mission.failureCode, findings: result.audit?.findings, timing: result.capture?.events.map((event: { id: string; sceneId: string; atMs: number }) => { const scene = result.capture.scenes.find((entry: { id: string }) => entry.id === event.sceneId); const action = plan.scenes.find((entry: { id: string }) => entry.id === event.sceneId).actions.find((entry: { id: string }) => entry.id === event.id); return { id: event.id, plannedMs: action.atMs, observedMs: event.atMs - scene.startMs }; }) })}\n`);
   assert.equal(result.mission.status, 'awaiting-review');
   assert.notEqual(result.audit.status, 'fail');
   const missionDir = resolve(directory, 'missions', prepared.missionId);

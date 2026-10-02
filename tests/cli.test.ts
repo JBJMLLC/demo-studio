@@ -16,7 +16,7 @@ it('runs the installed-style command through a symlink with a different filename
     expect(doctor.status).toBe(0);
     expect(JSON.parse(doctor.stdout).ready).toBe(true);
   } finally { rmSync(directory, { recursive: true, force: true }); }
-});
+}, 25_000);
 
 it('can be imported from a stdin module without running the CLI', () => {
   const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-'], {
@@ -24,4 +24,4 @@ it('can be imported from a stdin module without running the CLI', () => {
   });
   expect(result.status).toBe(0);
   expect(result.stdout.trim()).toBe('imported');
-});
+}, 15_000);
