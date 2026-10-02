@@ -52,24 +52,25 @@ jobs:
 
       - name: Install the production release archive
         run: |
-          mkdir -p ../release-bundle ../production-install
-          npm pack --pack-destination ../release-bundle
-          node scripts/check-public-boundary.mjs --archive ../release-bundle/jbjmllc-demo-studio-0.1.0.tgz
-          npm install --prefix ../production-install --omit=dev ../release-bundle/jbjmllc-demo-studio-0.1.0.tgz
-          ../production-install/node_modules/.bin/demo-studio doctor
+          mkdir -p "$RUNNER_TEMP/demo-studio-release" "$RUNNER_TEMP/demo-studio-production"
+          npm pack --pack-destination "$RUNNER_TEMP/demo-studio-release"
+          node scripts/check-public-boundary.mjs --archive "$RUNNER_TEMP/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz"
+          npm install --prefix "$RUNNER_TEMP/demo-studio-production" --omit=dev "$RUNNER_TEMP/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz"
+          "$RUNNER_TEMP/demo-studio-production/node_modules/.bin/demo-studio" doctor
 
       - name: Smoke test the installed runtime with the synthetic fixture
         id: smoke
         env:
-          DEMO_STUDIO_MCP_ENTRY: ../production-install/node_modules/@jbjmllc/demo-studio/dist/mcp.js
+          DEMO_STUDIO_MCP_ENTRY: ${{ runner.temp }}/demo-studio-production/node_modules/@jbjmllc/demo-studio/dist/mcp.js
           DEMO_STUDIO_SMOKE_KEEP_REVIEW: '1'
         run: npm run test:smoke
 
       - name: Retain the exact synthetic review candidate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: synthetic-candidate-node-${{ matrix.node-version }}
           retention-days: 7
+          if-no-files-found: error
           path: |
             ${{ steps.smoke.outputs.mission_directory }}/render/demo.mp4
             ${{ steps.smoke.outputs.mission_directory }}/render/poster.png
@@ -89,11 +90,12 @@ jobs:
             ${{ steps.smoke.outputs.mission_directory }}/review-history.json
 
       - name: Retain the validated production archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: production-archive-node-${{ matrix.node-version }}
           retention-days: 7
-          path: ../release-bundle/jbjmllc-demo-studio-0.1.0.tgz
+          if-no-files-found: error
+          path: ${{ runner.temp }}/demo-studio-release/jbjmllc-demo-studio-0.1.0.tgz
 
       - name: Validate skills
         run: node scripts/check-skills.mjs
