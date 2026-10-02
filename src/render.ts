@@ -1,6 +1,5 @@
 import { bundle } from '@remotion/bundler';
-import { renderMedia, selectComposition } from '@remotion/renderer';
-import { chromium } from 'playwright';
+import { ensureBrowser, renderMedia, selectComposition } from '@remotion/renderer';
 import { createServer } from 'node:http';
 import { createReadStream, existsSync } from 'node:fs';
 import { mkdir, stat, writeFile } from 'node:fs/promises';
@@ -64,9 +63,12 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     // default Webpack cache is rooted beside its package.json, so disable that
     // cache instead of allowing build output inside the verified package.
     const serveUrl = await bundle({ entryPoint: existsSync(nearby) ? nearby : source, outDir: resolve(directory, 'bundle'), enableCaching: false });
-    const composition = await selectComposition({ serveUrl, id: 'Demo', inputProps: props, browserExecutable: chromium.executablePath() });
+    // Render with Remotion's pinned Chrome Headless Shell, not Playwright's Chromium:
+    // newer full Chromium builds return tiled, mis-scaled frame screenshots.
+    await ensureBrowser();
+    const composition = await selectComposition({ serveUrl, id: 'Demo', inputProps: props });
     const videoPath = resolve(directory, 'demo.mp4');
-    await renderMedia({ composition, serveUrl, codec: 'h264', outputLocation: videoPath, inputProps: props, browserExecutable: chromium.executablePath(), concurrency: 2, overwrite: true, onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }) });
+    await renderMedia({ composition, serveUrl, codec: 'h264', outputLocation: videoPath, inputProps: props, concurrency: 2, overwrite: true, onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }) });
     const info = await mediaInfo(videoPath);
     if (Math.abs(info.durationMs - durationInFrames / plan.fps * 1000) > 100 || info.width !== capture.width || info.height !== capture.height || info.hasAudio !== (audio.length > 0)) throw new Error('Final media does not match its composition');
     try {
