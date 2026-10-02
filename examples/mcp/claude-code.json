@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "demo-studio": {
+      "command": "node",
+      "args": ["/path/to/built/demo-studio/dist/mcp.js"]
+    }
+  }
+}

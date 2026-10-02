@@ -38,6 +38,9 @@ const actualSkills = readdirSync(skillsRoot).filter((entry) => {
   return statSync(path).isDirectory();
 }).sort();
 const expected = [...expectedSkills].sort();
+if (existsSync(resolve(root, '.mcp.json'))) issues.push('.mcp.json [skills-plugin-must-not-autostart-unbuilt-runtime]');
+const plugin = JSON.parse(readFileSync(resolve(root, '.claude-plugin/plugin.json'), 'utf8'));
+if (plugin.mcpServers) issues.push('.claude-plugin/plugin.json [runtime-registration-must-be-explicit]');
 if (JSON.stringify(actualSkills) !== JSON.stringify(expected)) {
   issues.push("skills [skill-set-must-match-public-contract]");
 }

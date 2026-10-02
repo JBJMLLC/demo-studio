@@ -77,10 +77,16 @@ jobs:
             ${{ steps.smoke.outputs.mission_directory }}/render/timeline.json
             ${{ steps.smoke.outputs.mission_directory }}/render/first-frame-integrity.json
             ${{ steps.smoke.outputs.mission_directory }}/capture.json
+            ${{ steps.smoke.outputs.mission_directory }}/capture/recording.mp4
+            ${{ steps.smoke.outputs.mission_directory }}/capture/*-before.png
+            ${{ steps.smoke.outputs.mission_directory }}/capture/*-after.png
             ${{ steps.smoke.outputs.mission_directory }}/plan.json
             ${{ steps.smoke.outputs.mission_directory }}/mission.json
+            ${{ steps.smoke.outputs.mission_directory }}/narration.json
+            ${{ steps.smoke.outputs.mission_directory }}/render.json
             ${{ steps.smoke.outputs.mission_directory }}/audit.json
             ${{ steps.smoke.outputs.mission_directory }}/review-packet.json
+            ${{ steps.smoke.outputs.mission_directory }}/review-history.json
 
       - name: Retain the validated production archive
         uses: actions/upload-artifact@v4

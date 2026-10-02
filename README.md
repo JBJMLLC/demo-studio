@@ -22,7 +22,14 @@ For a local project copy into Codex, choose a skill and omit `--global`:
 npx skills add JBJMLLC/demo-studio --skill demo-brief --agent codex --copy
 ```
 
-Replace `demo-brief` with `demo-storyboard`, `demo-narration`, `demo-story-review`, `browser-demo-recording`, or `demo-audit`. Project-local copies avoid overwriting user-global skills. Claude Code users can add this repository as a marketplace; its plugin manifest also provides the local stdio MCP server.
+Replace `demo-brief` with `demo-storyboard`, `demo-narration`, `demo-story-review`, `browser-demo-recording`, or `demo-audit`. Project-local copies avoid overwriting user-global skills. Claude Code users can add this repository as a marketplace:
+
+```text
+/plugin marketplace add JBJMLLC/demo-studio
+/plugin install demo-studio@demo-studio
+```
+
+The marketplace plugin installs skills only: it never starts an unbuilt server. For recording and rendering, build the runtime or install the compiled release archive, then explicitly configure the [local MCP server](docs/mcp.md).
 
 ## Run the synthetic quickstart
 
