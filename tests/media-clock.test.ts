@@ -51,6 +51,7 @@ describe('measured clock and media boundary', () => {
       const calibrated = calibrateVideo(video, [event('start', 1000), event('end', 2000)]);
       expect(calibrated.ok).toBe(true);
       expect(calibrated.uncertaintyMs).toBeLessThan(100);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2000)], { maxUncertaintyMs: 0 }).error).toMatch(/uncertainty rejected.*exceeds 0\.00ms/);
       expect(calibrateVideo(video, [event('start', 1000), event('end', 2300)]).ok).toBe(false);
       expect(calibrateVideo(video, [event('start', 1000), event('end', 2300)]).error).toMatch(/frame interval 33\.\d+ms/);
       expect(calibrateVideo(video, [event('start', 1000), event('end', 2100)]).ok).toBe(false);
