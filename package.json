@@ -1,20 +1,38 @@
 {
   "name": "@jbjmllc/demo-studio",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Story-first product demos: skills, browser capture, narration, rendering, and evidence-based review.",
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=22" },
-  "bin": { "demo-studio": "dist/cli.js" },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "demo-studio": "dist/cli.js"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./schemas": "./dist/schemas.js",
     "./contracts": "./dist/contracts.js",
     "./media-clock": "./dist/media-clock.js",
+    "./browser-clock": "./dist/browser-clock.js",
     "./capsule": "./dist/capsule.js",
     "./runtime": "./dist/runtime-api.js"
   },
-  "files": ["dist", "src/composition.tsx", "skills", "schemas", "docs", "examples", "scripts", ".claude-plugin", "npm-shrinkwrap.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"],
+  "files": [
+    "dist",
+    "src/composition.tsx",
+    "skills",
+    "schemas",
+    "docs",
+    "examples",
+    "scripts",
+    ".claude-plugin",
+    "npm-shrinkwrap.json",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",

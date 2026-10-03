@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.3
+
+- Add an explicit browser-domain to video-PTS contract with recording/context/document/origin/reset identities, exact evidence references, both measured transition brackets, fixed-offset mapping, and conservative uncertainty. Reject drift or uncertainty beyond `ceil(1000 / fps)`; never infer a clock basis or adjust playback speed.
+- Decode configurable uniform-RGB or explicit RGB-range markers without changing their geometry. Retain raw preceding/first-changed presentation timestamps even when evidence is rejected.
+- Keep Remotion's routine browser-download and rendering logs out of the MCP JSON-RPC stdout stream.
+
 - Add the `demo-production-pipeline` skill: scout before scripting, silent rehearsal gated like the audit, one serialized voice and render queue, per-plan data resets, environment checks, and a producer/coordinator split. Fold the matching lessons into the recording, narration, and audit skills.
 
 - Render with Remotion's pinned Chrome Headless Shell instead of Playwright's Chromium. Current full Chromium builds return tiled, mis-scaled frames, which failed the first-frame integrity check.

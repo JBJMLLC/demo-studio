@@ -97,6 +97,8 @@ Source archives are not installed as an npm package. For a built tarball, instal
 
 The package root, schemas, contracts, media-clock helpers, and capsule API are safe host imports. Under Yarn Plug'n'Play, capture, rendering and MCP run in an integrity-pinned standalone runtime, not the host's in-process Remotion dependency graph.
 
+For applications that timestamp actions with browser performance clocks, use the [browser-to-video clock contract](docs/browser-clock.md). It requires explicit clock and recording identities, measured presentation brackets, and exact evidence references; browser timestamps must not be passed to the worker-clock mapper.
+
 Add a downloaded, checksum-verified toolkit archive to your Yarn project, then run:
 
 ```sh
