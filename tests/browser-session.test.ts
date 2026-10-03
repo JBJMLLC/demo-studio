@@ -45,6 +45,13 @@ describe('injectable browser session', () => {
     await expect(capture(makePlan(inside, '#app'), workDir(), noNarration)).rejects.toThrow(/off-origin/);
   }, 60_000);
 
+  it('passes mediaClock limits through to calibration', async () => {
+    const inside = await serve((_request, response) => { response.setHeader('Content-Type', 'text/html'); response.end('<main id="app">App</main>'); });
+    const plan = makePlan(inside, '#app');
+    await expect(capture(plan, workDir(), noNarration, { mediaClock: { maxOffsetDriftMs: -1 } })).rejects.toThrow(/exceeds -1\.00ms \(frame interval/);
+    await expect(capture(plan, workDir(), noNarration, { mediaClock: { maxUncertaintyMs: -1 } })).rejects.toThrow(/uncertainty rejected.*exceeds -1\.00ms/);
+  }, 60_000);
+
   it('records through a caller-supplied session factory', async () => {
     let outsideRequests = 0;
     const outside = await serve((_request, response) => { outsideRequests++; response.end('outside'); });

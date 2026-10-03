@@ -56,7 +56,10 @@ export interface MediaClockDecodeOptions {
   minStableFrames?: number;
   /** Center/border luminance separation required for the marker fingerprint. */
   minPatternContrast?: number;
-  /** Maximum accepted difference between per-pulse offset estimates. */
+  /**
+   * Maximum accepted difference between per-pulse offset estimates. Defaults to
+   * `defaultMaxOffsetDriftMs(frameIntervalMs)`: `max(50, 3 * frameIntervalMs + 10)`.
+   */
   maxOffsetDriftMs?: number;
   /** Maximum uncertainty accepted for a usable worker-to-video mapping. */
   maxUncertaintyMs?: number;
@@ -371,6 +374,29 @@ function normalizeEvents(events: readonly MarkerBracketEvent[], recordingId?: st
     });
 }
 
+/** Median spacing of decoded frame timestamps, or null when it cannot be measured. */
+export function estimateFrameIntervalMs(frames: readonly Pick<DecodedMarkerFrame, 'timestampMs'>[]): number | null {
+  const deltas: number[] = [];
+  for (let i = 1; i < frames.length; i += 1) {
+    const delta = frames[i].timestampMs - frames[i - 1].timestampMs;
+    if (finiteNumber(delta) && delta > 0) deltas.push(delta);
+  }
+  if (deltas.length === 0) return null;
+  deltas.sort((a, b) => a - b);
+  return deltas[Math.floor(deltas.length / 2)];
+}
+
+/**
+ * Frame-aware drift limit. Measured offsets move in whole-frame steps, so a
+ * fixed 50ms limit tolerates a one-frame slip at 25 fps. Allow three frames
+ * plus 10ms, never below the 50ms floor (25 fps -> 130ms, 60 fps -> 60ms).
+ */
+export function defaultMaxOffsetDriftMs(frameIntervalMs?: number | null): number {
+  const floor = DEFAULT_DECODE_OPTIONS.maxOffsetDriftMs;
+  if (frameIntervalMs === undefined || frameIntervalMs === null || !finiteNumber(frameIntervalMs) || frameIntervalMs <= 0) return floor;
+  return Math.max(floor, (3 * frameIntervalMs) + 10);
+}
+
 function failedCalibration(
   recordingId: string,
   error: string,
@@ -431,6 +457,9 @@ export function calibrateVideo(
   } catch (error) {
     return failedCalibration(recordingId, error instanceof Error ? error.message : String(error), [], 0, merged.maxOffsetDriftMs);
   }
+  const frameIntervalMs = estimateFrameIntervalMs(frames);
+  if (options.maxOffsetDriftMs === undefined) merged.maxOffsetDriftMs = defaultMaxOffsetDriftMs(frameIntervalMs);
+  const frameNote = frameIntervalMs === null ? 'unknown frame interval' : `frame interval ${frameIntervalMs.toFixed(2)}ms`;
   const transitions = detectMediaClockTransitions(frames, merged);
   const rawSelectedEvents = events.filter((event) => (
     event.recordingId === recordingId
@@ -520,7 +549,7 @@ export function calibrateVideo(
   if (driftMs > merged.maxOffsetDriftMs) {
     return failedCalibration(
       recordingId,
-      `Media clock drift rejected: start/end offset disagreement ${driftMs.toFixed(2)}ms exceeds ${merged.maxOffsetDriftMs.toFixed(2)}ms`,
+      `Media clock drift rejected: start/end offset disagreement ${driftMs.toFixed(2)}ms exceeds ${merged.maxOffsetDriftMs.toFixed(2)}ms (${frameNote})`,
       transitions,
       frames.length,
       merged.maxOffsetDriftMs,

@@ -39,6 +39,7 @@ When a plan that passed before fails now with timeouts, 503s, unexpected 500s, o
 - Check for database drift. Tests that replay old migrations into the shared development database can silently break views.
 - Record a production build on a fixed port, never a hot-reloading dev server, and never edit, merge, or reinstall in the served checkout during a run. To update the app, build into a new folder and swap it between renders.
 - Check that the saved login is still valid.
+- For `CLOCK_CALIBRATION_FAILED` drift, read the frame interval in the message. Drift moves in whole-frame steps; the default limit is `max(50, 3 × frameIntervalMs + 10)`, and callers can raise it with the capture option `mediaClock.maxOffsetDriftMs`.
 
 ## Producers and coordinator
 

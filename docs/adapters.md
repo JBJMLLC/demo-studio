@@ -30,6 +30,7 @@ Import adapter types from the package root, receipt/dependency contracts from `@
 A custom `BrowserAdapter` does not have to reimplement recording, cursor, clock calibration, or assertions. The built-in `capture()` and `checkTargetReady()` accept an optional third or second argument:
 
 - `createSession(browser, origin, contextOptions)` returns `{ context, assertBoundary }`. It replaces the default `isolatedContext`, which is also exported. Pass `contextOptions` through to `browser.newContext()` so the viewport, recording, and reduced-motion settings stay intact. `assertBoundary()` runs after the first navigation and every action; throw from it when your policy saw traffic it refuses.
+- `mediaClock` (`{ maxOffsetDriftMs?, maxUncertaintyMs? }`) overrides the clock-calibration limits. Without it, the drift limit is frame-aware, `max(50, 3 × frameIntervalMs + 10)` milliseconds, using the recording's measured frame interval (25 fps: 130 ms; 60 fps: 60 ms; unknown: 50 ms). Measured drift moves in whole-frame steps, so a fixed 50 ms limit rejected healthy 25 fps recordings. A rejection names the frame interval used.
 - `ready(page)` runs on the recorded page after the first navigation and before the first scene, for an application that needs time to finish loading.
 
 ```ts
