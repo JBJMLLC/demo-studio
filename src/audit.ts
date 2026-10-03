@@ -224,7 +224,7 @@ function distance(left: { x: number; y: number }, right: { x: number; y: number 
 }
 
 function isActiveNarratedAction(action: DemoAction): boolean {
-  return action.type === 'click' || action.type === 'type' || action.type === 'drag';
+  return action.type === 'click' || action.type === 'type' || action.type === 'drag' || action.type === 'focus';
 }
 
 function containsAnchor(speech: string, anchor: string): boolean {

@@ -223,7 +223,8 @@
                         "type",
                         "drag",
                         "wait",
-                        "press"
+                        "press",
+                        "focus"
                       ]
                     },
                     "selector": {
@@ -259,6 +260,19 @@
                       "type": "string",
                       "minLength": 1,
                       "maxLength": 300
+                    },
+                    "zoom": {
+                      "anyOf": [
+                        {
+                          "type": "boolean",
+                          "const": false
+                        },
+                        {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 3
+                        }
+                      ]
                     }
                   },
                   "required": [

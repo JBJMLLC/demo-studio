@@ -94,6 +94,14 @@ async function center(locator: Locator): Promise<Point> {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
+async function boxOf(locator: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  await locator.waitFor({ state: 'visible', timeout: 10_000 });
+  await locator.scrollIntoViewIfNeeded({ timeout: 10_000 });
+  const box = await locator.boundingBox();
+  if (!box || box.width <= 0 || box.height <= 0) throw new Error('Action target has no visible geometry');
+  return box;
+}
+
 export async function capture(plan: DemoPlan, workDir: string, narration: NarrationResult, options: BrowserCaptureOptions = {}): Promise<CaptureResult> {
   validateMediaClockLimits(options.mediaClock ?? {});
   const createSession = options.createSession ?? isolatedContext;
@@ -149,7 +157,9 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
       for (const action of scene.actions) {
         activeActionId = action.id;
         const locator = action.selector ? page.locator(action.selector) : undefined;
-        const target = locator ? await center(locator) : pointer;
+        // A focus points at its target without moving the cursor.
+        const focusBox = action.type === 'focus' ? await boxOf(locator!) : undefined;
+        const target = locator && !focusBox ? await center(locator) : pointer;
         const approach = ['click', 'type', 'drag'].includes(action.type) ? 380 : 0;
         // Reserve a readable hover and protocol-latency headroom before the
         // authored action time. Slow commands must not shift every later click.
@@ -193,11 +203,12 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
             await page.mouse.down(); await move(page, pointer, destination, 600); await page.mouse.up(); pointer = destination; break;
           }
           case 'press': await locator!.press(action.value!); break;
+          case 'focus': if (action.durationMs) await sleep(action.durationMs); break;
           case 'wait': await sleep(action.durationMs!); break;
         }
         if (new URL(page.url()).origin !== new URL(plan.targetUrl).origin) throw new Error('Action left the configured origin');
         assertBoundary();
-        events.push({ id: action.id, sceneId: scene.id, type: action.type, atMs, endMs: performance.now(), cursor: plan.presentation.cursor === 'hidden' ? null : { ...pointer }, ...(action.spokenAnchor ? { spokenAnchor: action.spokenAnchor } : {}) });
+        events.push({ id: action.id, sceneId: scene.id, type: action.type, atMs, endMs: performance.now(), cursor: plan.presentation.cursor === 'hidden' ? null : { ...pointer }, ...(action.spokenAnchor ? { spokenAnchor: action.spokenAnchor } : {}), ...(focusBox ? { target: focusBox, ...(action.durationMs !== undefined ? { holdMs: action.durationMs } : {}) } : {}), ...(action.zoom !== undefined ? { zoom: action.zoom } : {}) });
       }
       for (const assertion of scene.assertions) {
         const locator = page.locator(assertion.selector);
