@@ -20,6 +20,16 @@ Cover active interactions close to when they happen. State what is being added, 
 - Name the visible chart, field, report, value, or saved state. Avoid vague filler such as “now becomes,” “shape the view,” or “operational signal.”
 - Read adjacent beats together and remove repeated setup, identical sentence starters, empty praise, and automation stage directions.
 - Keep pronunciation notes outside the canonical caption text.
+- Name what you point at. "This", "here", and "over there" mean nothing in a transcript or to a listener who cannot see the screen; say "the Revenue chart" or "the Share dialog" instead.
+- Define each term from the brief's terms list the first time it is spoken, in a few plain words.
+- Speak to the viewer as "you", with "I" for a real choice. Skip greetings, "in this video", and "next time"; open on the task and close on what the viewer can now do.
+- If an essential visible result is never spoken, a viewer who cannot see the screen misses it. Say the result ("three rows now show Overdue"), not only the action.
+
+## Write for captions
+
+The canonical text becomes the captions and transcript. Prefer sentences that break cleanly into lines of about 42 characters, and avoid long chains of clauses. Captions should not need more than about 20 characters per second; when a line is that dense, shorten it or give the scene more time.
+
+Supplied human recordings should be edited for filler words, false starts, and long pauses before alignment. Remove them; do not speed up the speech.
 
 Timing is an editorial question: if a sentence does not fit naturally before or during the action, shorten it or allow more screen time. Do not speed up the voice to satisfy a convenient word-per-minute target.
 
@@ -29,4 +39,5 @@ Timing is an editorial question: if a sentence does not fit naturally before or 
 - Every active action has one clear spoken anchor: whole words copied exactly from the narration ("Click Add two-step", never "Click Add two"), short, and inside one sentence. Anchors are matched against the transcript after the pronunciation map is applied, so write them as the script spells them, not as the voice says them.
 - The through-line survives when the words are read without the action labels.
 - Caption text matches the canonical speech.
+- Every listed term is defined at first use and has a pronunciation entry when the voice could get it wrong.
 - The spoken thought fits the visible state and gives the viewer time to understand it.

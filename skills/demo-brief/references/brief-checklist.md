@@ -11,6 +11,17 @@ Create or update the brief in the run workspace before drafting a storyboard. Ke
 - Non-goals, intended audience/channel, accessibility needs, privacy boundaries, and hard delivery constraints.
 - Assumptions and unresolved facts, each with an owner or a question.
 
+## Teaching outcome and delivery
+
+Record these when the demo teaches a task, is part of a course, or goes to a public channel:
+
+- **What the viewer can do afterward,** as an observable action ("share a read-only chart"), not a topic ("sharing"). A course or series needs several of these; course platforms reject "everyone" as an audience.
+- **Format:** a tutorial the viewer follows and rewatches, or a walkthrough watched once. Tutorials need skimmable scene boundaries and a task-shaped title.
+- **Length budget:** aim for about 2 to 6 minutes per lesson, with one task per lesson. Plan a series of lessons rather than one long video.
+- **Terms and pronunciation:** product names, acronyms, and jargon the narration will say, each with how to say it and whether the viewer already knows it. Undefined terms are a story problem; mispronounced terms are an audit finding.
+- **Prerequisites and practice:** what the viewer needs first, and for a series, the files or exercise that lets them try the task themselves.
+- **Channel requirements:** the destination's resolution, caption files, transcript, chapters, and any disclosure of synthetic voice or AI assistance. Ask for the platform's current specification rather than assuming one.
+
 ## Ask well
 
 - Ask one question, then wait for the answer before asking another.

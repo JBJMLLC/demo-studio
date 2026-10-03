@@ -17,4 +17,4 @@ Keep the exact product facts and accepted wording. Every visible click, typed en
 4. Read adjacent scenes aloud as one lesson. Fix repeated cadence, abstract transitions, and abrupt handoffs.
 5. Preserve the approved canonical words in captions and send the exact draft to [demo-story-review](../demo-story-review/SKILL.md). Read [spoken narration guidance](references/spoken-narration.md) for detailed checks.
 
-First person is useful when it conveys a real choice; use it where natural, not as a repeated “I’ll click” transcript. Never accelerate speech to fit a target runtime. Tighten the story or give the proof more room.
+Name what is on screen instead of saying "this" or "here", and define each unfamiliar term the first time it is spoken. First person is useful when it conveys a real choice; use it where natural, not as a repeated “I’ll click” transcript. Never accelerate speech to fit a target runtime. Tighten the story or give the proof more room.

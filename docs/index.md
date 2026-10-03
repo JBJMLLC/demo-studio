@@ -9,6 +9,7 @@ Start with the [quickstart](quickstart.md), then use the [plan format](plan-form
 - [Quickstart](quickstart.md) — install requirements, run the synthetic app, and generate an example.
 - [CLI reference](cli.md) — exact command forms and mission flow.
 - [Skills](skills.md) — choose one of the seven composable planning, recording, audit, and production skills.
+- [Instructor guidelines](instructor-guidelines.md) — public platform, accessibility, and research sources behind the teaching and delivery checks.
 - [Architecture](architecture.md) — how a brief becomes an auditable media artifact.
 - [Plan format](plan-format.md) — fields, actions, assertions, and example plan.
 - [Configuration and narration](configuration.md) — captioned defaults and optional speech inputs.

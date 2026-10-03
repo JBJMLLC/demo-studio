@@ -11,6 +11,7 @@ Keep a target catalog for shared chrome: navigation, page header, list search, r
 - Lay out each scene's spoken text on a synthetic clock. Use an estimated words-per-second rate, the configured pause between sentences, and the same pronunciation map the voice will use. Then align actions exactly as a narrated run aligns them: on their spoken anchors, after the cursor runway and every wait.
 - Run the real capture against the real app, with every assertion, target check, and error watcher.
 - **Mirror the audit.** Every check the final audit fails must also fail the rehearsal. In particular, an active action that lands after the scene's narration has ended must fail, not warn: the real voice can be faster than the estimate. Use a safety margin (for example 500 ms inside the audit tolerance). Before this gate existed, renders failed only after minutes of voicing.
+- Run the voice-independent [delivery checks](../../demo-audit/references/delivery-checks.md) on the rehearsal too: phone-size legibility, frozen-frame stretches, flashes, lesson length, and caption density from the synthetic clock. Only loudness and pronunciation need the real voice.
 - Write a marker: `{ status, planHash, appUrl, at, failure?, warnings }`. Bind it to the exact compiled plan, including actions, narration and fixture/reset configuration that affects what the viewer sees. A change to any of those inputs makes the rehearsal evidence stale.
 
 ## Voice and render queue (pass 2)
@@ -19,6 +20,14 @@ Keep a target catalog for shared chrome: navigation, page header, list search, r
 - All voice calls go through one cross-process lock. A directory created with `mkdir` is enough; record its owner's process ID and reclaim the lock when that process is gone. Cache narration per sentence, keyed by spoken text, voice, and speed, so a re-run or a shared sentence costs nothing. Parallel recorders without a lock and cache cause rate-limit storms.
 - Lock the voice configuration in one committed file: voice, native playback speed, sentence gap, language, and pronunciation map. Default to 1× and use natural delivery and sentence spacing (about 500 ms for step-by-step lessons), not automatic time scaling, to improve clarity. Use a different provider-native speed only when explicitly configured. Changing the file invalidates affected cached narration.
 - Run the queue detached from any agent shell; agent shells and background tasks are often killed after a fixed time. Make it safe to stop at any moment: nothing is marked rendered until the video is in its final location.
+
+## Package the series
+
+- Keep lessons to one task and about 2 to 6 minutes each. Split a long plan at a scene boundary instead of compressing it.
+- Measure every narrated lesson against the same loudness target; volume that jumps between lessons is a common platform rejection. The runtime does not normalize loudness, so fix differences in the voice configuration or source recording and render again. Never re-encode a reviewed video: the review is bound to its hash.
+- Give each lesson a task-shaped title, a one- or two-sentence summary, sidecar captions, a transcript, and chapters when the channel uses them. Derive all of them from the canonical narration and `render/timeline.json`, after the final render.
+- For a course, attach a practice activity and its starter files to each section, and check that the files exist and match what the lesson shows.
+- Keep the voice, cursor style, zoom choice, viewport, and caption settings the same across a series. Change them only for the whole series.
 
 ## Data that stays put
 
