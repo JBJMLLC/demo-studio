@@ -12,13 +12,13 @@ export const pointSchema = z.object({
 export const presentationSchema = z.object({
   cursor: z.enum(['pointer', 'circle', 'hidden']).default('pointer'),
   captions: z.boolean().default(true),
-  /** Camera zoom toward clicks and typing; 1 keeps the full frame. */
+  /** Camera zoom toward clicks, typing, drags and focus actions; 1 keeps the full frame and turns every action zoom off. */
   zoom: z.number().min(1).max(3).default(1),
 }).strict().default({});
 
 export const actionSchema = z.object({
   id: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/),
-  type: z.enum(['navigate', 'click', 'type', 'drag', 'wait', 'press']),
+  type: z.enum(['navigate', 'click', 'type', 'drag', 'wait', 'press', 'focus']),
   selector: z.string().trim().min(1).max(2_000).optional(),
   value: z.string().max(20_000).optional(),
   url: z.string().trim().min(1).max(4_096).optional(),
@@ -26,6 +26,8 @@ export const actionSchema = z.object({
   durationMs: z.number().int().min(0).max(60_000).optional(),
   atMs: z.number().int().nonnegative().max(3_600_000).optional(),
   spokenAnchor: z.string().trim().min(1).max(300).optional(),
+  /** `false` skips this action's camera zoom; a number (1-3) overrides the zoom level for it. Needs a plan `presentation.zoom` above 1. */
+  zoom: z.union([z.literal(false), z.number().min(1).max(3)]).optional(),
 }).strict().superRefine((action, ctx) => {
   const requireField = (field: 'selector' | 'value' | 'url' | 'toSelector' | 'durationMs') => {
     if (action[field] === undefined || action[field] === '') {
@@ -46,6 +48,7 @@ export const actionSchema = z.object({
     requireField('selector');
     if (action.value === undefined) requireField('value');
   }
+  if (action.type === 'focus') requireField('selector');
   if (action.type === 'wait') requireField('durationMs');
   if (action.type !== 'navigate' && action.url !== undefined) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['url'], message: 'url is only supported for navigate actions' });
@@ -53,8 +56,11 @@ export const actionSchema = z.object({
   if (action.type !== 'drag' && action.toSelector !== undefined) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['toSelector'], message: 'toSelector is only supported for drag actions' });
   }
-  if (action.type !== 'wait' && action.durationMs !== undefined) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['durationMs'], message: 'durationMs is only supported for wait actions' });
+  if (action.type !== 'wait' && action.type !== 'focus' && action.durationMs !== undefined) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['durationMs'], message: 'durationMs is only supported for wait and focus actions' });
+  }
+  if (!['click', 'type', 'drag', 'focus'].includes(action.type) && action.zoom !== undefined) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['zoom'], message: 'zoom is only supported for click, type, drag, and focus actions' });
   }
 });
 
@@ -159,15 +165,15 @@ export const planSchema = z.object({
           ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'url'], message: 'navigate action URL is invalid' });
         }
       }
-      const active = ['click', 'type', 'drag'].includes(action.type);
+      const active = ['click', 'type', 'drag', 'focus'].includes(action.type);
       if (plan.mode === 'narrated' && active) {
         if (!action.spokenAnchor) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'spokenAnchor'], message: 'narrated click, type, and drag actions require a spokenAnchor' });
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'spokenAnchor'], message: 'narrated click, type, drag, and focus actions require a spokenAnchor' });
         } else if (!containsSpokenAnchor(scene.say, action.spokenAnchor)) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'spokenAnchor'], message: 'spokenAnchor must occur in scene.say' });
         }
         if (action.atMs === undefined) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'atMs'], message: 'narrated click, type, and drag actions require authored atMs timing' });
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scenes', sceneIndex, 'actions', actionIndex, 'atMs'], message: 'narrated click, type, drag, and focus actions require authored atMs timing' });
         }
       }
     });
@@ -253,10 +259,16 @@ export const captureSceneSchema = z.object({
 export const captureEventSchema = z.object({
   id: z.string().min(1),
   sceneId: z.string().min(1),
-  type: z.enum(['navigate', 'click', 'type', 'drag', 'wait', 'press']),
+  type: z.enum(['navigate', 'click', 'type', 'drag', 'wait', 'press', 'focus']),
   atMs: z.number().finite().nonnegative(),
   endMs: z.number().finite().nonnegative().optional(),
   cursor: pointSchema.nullable(),
+  /** Bounding box of a focus action's target, in recording pixels. */
+  target: z.object({ x: z.number().finite(), y: z.number().finite(), width: z.number().finite().positive(), height: z.number().finite().positive() }).strict().optional(),
+  /** Authored focus hold; absent means hold until the next action. */
+  holdMs: z.number().finite().nonnegative().optional(),
+  /** Copied from the action: `false` skips the zoom, a number overrides its level. */
+  zoom: z.union([z.literal(false), z.number().min(1).max(3)]).optional(),
   spokenAnchor: z.string().trim().min(1).optional(),
 }).strict();
 

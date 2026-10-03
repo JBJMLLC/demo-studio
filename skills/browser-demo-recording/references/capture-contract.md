@@ -15,7 +15,7 @@
 - The rendered video has the same pixel size as the plan's viewport; there is no high-DPI scaling. Course platforms expect at least 1280×720 at 16:9. A 1280×720 viewport keeps ordinary app text readable on a phone; use 1920×1080 only when the app's essential text stays legible after scaling a frame to phone size.
 - Keep the screen clean: dismiss cookie banners, autofill and password prompts, tours, chat widgets, and notifications that are not part of the proof. Do this through demo data or app settings, not by rewriting the page.
 - When captions are off, keep the proof away from the bottom edge, where player controls cover the frame. With captions on, the caption band sits below the recording and takes that space.
-- Choose one pointing style per series and record it in the plan: a cursor that moves with purpose and rests on the target, or optional zoom. Never circle or wiggle the cursor to point. Some channels forbid zoom, so check the brief before enabling it.
+- Choose one pointing style per series and record it in the plan: a cursor that moves with purpose and rests on the target, or optional zoom. When narration describes an area without clicking it, use a `focus` action instead of wiggling the cursor; it zooms onto the area only if the plan enables zoom. Never circle or wiggle the cursor to point. Some channels forbid zoom, so check the brief before enabling it.
 
 ## Keep the interaction understandable
 
