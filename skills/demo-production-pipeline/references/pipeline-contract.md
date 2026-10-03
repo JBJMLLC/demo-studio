@@ -11,13 +11,13 @@ Keep a target catalog for shared chrome: navigation, page header, list search, r
 - Lay out each scene's spoken text on a synthetic clock. Use an estimated words-per-second rate, the configured pause between sentences, and the same pronunciation map the voice will use. Then align actions exactly as a narrated run aligns them: on their spoken anchors, after the cursor runway and every wait.
 - Run the real capture against the real app, with every assertion, target check, and error watcher.
 - **Mirror the audit.** Every check the final audit fails must also fail the rehearsal. In particular, an active action that lands after the scene's narration has ended must fail, not warn: the real voice can be faster than the estimate. Use a safety margin (for example 500 ms inside the audit tolerance). Before this gate existed, renders failed only after minutes of voicing.
-- Write a marker: `{ status, planHash, appUrl, at, failure?, warnings }`. Hash the plan's script content, excluding fields such as data-reset lists that do not change the video. Any script edit makes the marker stale.
+- Write a marker: `{ status, planHash, appUrl, at, failure?, warnings }`. Bind it to the exact compiled plan, including actions, narration and fixture/reset configuration that affects what the viewer sees. A change to any of those inputs makes the rehearsal evidence stale.
 
 ## Voice and render queue (pass 2)
 
 - Run one queue per machine. It selects plans whose latest rehearsal passed for their current hash and that have no render for the same plan hash and voice-configuration hash. Oldest pass goes first. Write `rendered` and `render-failed` markers, and skip a failed plan until it changes or an operator retries it.
 - All voice calls go through one cross-process lock. A directory created with `mkdir` is enough; record its owner's process ID and reclaim the lock when that process is gone. Cache narration per sentence, keyed by spoken text, voice, and speed, so a re-run or a shared sentence costs nothing. Parallel recorders without a lock and cache cause rate-limit storms.
-- Lock the voice configuration in one committed file: voice, speed, sentence gap, language, and pronunciation map. A slightly slow speed (around 0.9) and a sentence gap of about 500 ms suit step-by-step lessons. Changing the file re-renders every narration.
+- Lock the voice configuration in one committed file: voice, native playback speed, sentence gap, language, and pronunciation map. Default to 1× and use natural delivery and sentence spacing (about 500 ms for step-by-step lessons), not automatic time scaling, to improve clarity. Use a different provider-native speed only when explicitly configured. Changing the file invalidates affected cached narration.
 - Run the queue detached from any agent shell; agent shells and background tasks are often killed after a fixed time. Make it safe to stop at any moment: nothing is marked rendered until the video is in its final location.
 
 ## Data that stays put
@@ -39,6 +39,7 @@ When a plan that passed before fails now with timeouts, 503s, unexpected 500s, o
 - Check for database drift. Tests that replay old migrations into the shared development database can silently break views.
 - Record a production build on a fixed port, never a hot-reloading dev server, and never edit, merge, or reinstall in the served checkout during a run. To update the app, build into a new folder and swap it between renders.
 - Check that the saved login is still valid.
+- For clock drift, inspect the actual presentation-frame timestamps, clock domains, same-evaluation brackets and timer precision. Preserve rejected measurements. Do not raise an acceptance limit merely to make the run pass; exploratory overrides are not synchronization proof. See the [browser clock contract](../../../docs/browser-clock.md) for explicit domains, precision bounds and the one-frame gate.
 
 ## Producers and coordinator
 
