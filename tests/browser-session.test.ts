@@ -2,7 +2,8 @@ import { createServer, type Server } from 'node:http';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as mediaClock from '../src/media-clock.js';
 import { capture, checkTargetReady, isolatedContext, type CreateBrowserSession } from '../src/browser.js';
 import { computeWordingApprovalHash, planSchema, type DemoPlan } from '../src/schemas.js';
 
@@ -43,6 +44,20 @@ describe('injectable browser session', () => {
     const outside = await serve((_request, response) => response.end('outside'));
     const inside = await serve((_request, response) => { response.setHeader('Content-Type', 'text/html'); response.end(`<main id="app">App</main><img src="${outside}/pixel">`); });
     await expect(capture(makePlan(inside, '#app'), workDir(), noNarration)).rejects.toThrow(/off-origin/);
+  }, 60_000);
+
+  it('passes mediaClock limits through to calibration', async () => {
+    const inside = await serve((_request, response) => { response.setHeader('Content-Type', 'text/html'); response.end('<main id="app">App</main>'); });
+    const plan = makePlan(inside, '#app');
+    const calibration = vi.spyOn(mediaClock, 'calibrateVideo');
+    cleanups.push(() => calibration.mockRestore());
+    // Keep the real decoder and all limits intact. Host scheduling may reject
+    // drift before uncertainty; forwarding must not depend on that ordering.
+    await expect(capture(plan, workDir(), noNarration, { mediaClock: { maxUncertaintyMs: 0 } })).rejects.toThrow(/Measured browser clock failed/);
+    expect(calibration).toHaveBeenCalledWith(expect.any(String), expect.any(Array), { maxUncertaintyMs: 0 });
+    calibration.mockClear();
+    await expect(capture(plan, workDir(), noNarration, { mediaClock: { maxOffsetDriftMs: -1 } })).rejects.toThrow(/Invalid media clock limit/);
+    expect(calibration).not.toHaveBeenCalled();
   }, 60_000);
 
   it('records through a caller-supplied session factory', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectMediaClockTransitions, buildMediaClockRuntimeSource, workerToVideoMs } from '../src/media-clock.js';
+import { validateMediaClockLimits, estimateFrameIntervalMs, detectMediaClockTransitions, buildMediaClockRuntimeSource, workerToVideoMs } from '../src/media-clock.js';
 import { serveMedia } from '../src/render.js';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -13,6 +13,15 @@ describe('measured clock and media boundary', () => {
     const transitions = detectMediaClockTransitions(frames);
     expect(transitions).toHaveLength(1);
     expect(transitions[0].frameIndex).toBe(2);
+  });
+  it('reports measured frame spacing without deriving a larger drift limit', () => {
+    expect(estimateFrameIntervalMs([0, 40, 80, 120].map((timestampMs) => ({ timestampMs })))).toBe(40);
+    expect(estimateFrameIntervalMs([{ timestampMs: 0 }])).toBeNull();
+  });
+  it.each([-1, NaN, Infinity])('rejects invalid explicit limits %s before decoding', value => {
+    expect(() => validateMediaClockLimits({ maxOffsetDriftMs: value })).toThrow(/Invalid/);
+    expect(() => validateMediaClockLimits({ maxUncertaintyMs: value })).toThrow(/Invalid/);
+    expect(calibrateVideo('not-a-recording', [], { maxOffsetDriftMs: value }).error).toMatch(/Invalid media clock limit/);
   });
   it('never creates a guessed mapping from failed calibration', () => {
     expect(() => workerToVideoMs({ ok: false, offsetMs: null }, 1000)).toThrow();
@@ -42,7 +51,13 @@ describe('measured clock and media boundary', () => {
       const calibrated = calibrateVideo(video, [event('start', 1000), event('end', 2000)]);
       expect(calibrated.ok).toBe(true);
       expect(calibrated.uncertaintyMs).toBeLessThan(100);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2000)], { maxUncertaintyMs: 0 }).error).toMatch(/uncertainty rejected.*exceeds 0\.00ms/);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2300)]).ok).toBe(false);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2300)]).error).toMatch(/frame interval 33\.\d+ms/);
       expect(calibrateVideo(video, [event('start', 1000), event('end', 2100)]).ok).toBe(false);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2100)]).maxOffsetDriftMs).toBe(50);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2100)], { maxOffsetDriftMs: 130 }).ok).toBe(true);
+      expect(calibrateVideo(video, [event('start', 1000), event('end', 2100)], { maxOffsetDriftMs: 50 }).ok).toBe(false);
       expect(calibrateVideo(video, [event('start', 1000)]).ok).toBe(false);
     } finally { rmSync(directory, { recursive: true }); }
   }, 25_000);
