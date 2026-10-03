@@ -22,7 +22,7 @@ Scenes should form one connected explanation: orient the viewer, show a meaningf
 
 ## Teach the task
 
-- **One task per lesson.** If the story needs two outcomes, plan two lessons. A lesson running past about 6 minutes usually holds a second task.
+- **One task per lesson.** For course or tutorial lessons, split at distinct tasks or learner outcomes. For a product or marketing walkthrough, connect the necessary actions to the brief's primary outcome. Duration alone does not demonstrate that the story contains a second task.
 - **Name terms before using them.** When the task depends on two or three unfamiliar concepts, open with a short orienting scene that names them on screen before the first action.
 - **Show the likely mistake.** When viewers commonly go wrong at a step, say so in that scene's Say or Learn and show how to recognize the correct result.
 - **Make the ending a capability.** The final scene's Learn states what the viewer can now do. Do not end on a teaser for another lesson or open with a greeting; each lesson stands alone.
