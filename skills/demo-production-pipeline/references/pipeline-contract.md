@@ -23,7 +23,7 @@ Keep a target catalog for shared chrome: navigation, page header, list search, r
 
 ## Package the series
 
-- Keep lessons to one task and about 2 to 6 minutes each. Split a long plan at a scene boundary instead of compressing it.
+- For course or tutorial series, keep each lesson to one task and use about six minutes as an optional planning guide, not a minimum or hard limit. For a product or marketing walkthrough, follow the duration target in the approved brief and destination. Split a course or tutorial plan only at a meaningful task boundary; do not compress the story, shorten proof holds, or accelerate speech to fit.
 - Measure every narrated lesson against the same loudness target; volume that jumps between lessons is a common platform rejection. The runtime does not normalize loudness, so fix differences in the voice configuration or source recording and render again. Never re-encode a reviewed video: the review is bound to its hash.
 - Give each lesson a task-shaped title, a one- or two-sentence summary, sidecar captions, a transcript, and chapters when the channel uses them. Derive all of them from the canonical narration and `render/timeline.json`, after the final render.
 - For a course, attach a practice activity and its starter files to each section, and check that the files exist and match what the lesson shows.

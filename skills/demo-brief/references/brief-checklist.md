@@ -15,11 +15,11 @@ Create or update the brief in the run workspace before drafting a storyboard. Ke
 
 Record these when the demo teaches a task, is part of a course, or goes to a public channel:
 
-- **What the viewer can do afterward,** as an observable action ("share a read-only chart"), not a topic ("sharing"). A course or series needs several of these; course platforms reject "everyone" as an audience.
+- **Outcome:** name the learner capability for a tutorial or course, or the decision or next step for a product walkthrough. Make it observable—a task someone can perform or a decision they can make—not just a topic ("sharing"). A course or series needs several of these; course platforms reject "everyone" as an audience.
 - **Format:** a tutorial the viewer follows and rewatches, or a walkthrough watched once. Tutorials need skimmable scene boundaries and a task-shaped title.
-- **Length budget:** aim for about 2 to 6 minutes per lesson, with one task per lesson. Plan a series of lessons rather than one long video.
+- **Length budget:** follow the brief and destination. For course or tutorial lessons, plan one task and use about six minutes as an optional planning guide, not a minimum or hard limit. For a one-off product or marketing walkthrough, use its audience and channel target rather than a course-lesson duration. Never speed up speech or shorten proof holds to fit.
 - **Terms and pronunciation:** product names, acronyms, and jargon the narration will say, each with how to say it and whether the viewer already knows it. Undefined terms are a story problem; mispronounced terms are an audit finding.
-- **Prerequisites and practice:** what the viewer needs first, and for a series, the files or exercise that lets them try the task themselves.
+- **Prerequisites and practice:** state prerequisites for a tutorial; for a course series, identify the exercise or starter files. Include practice only when it fits the format and promised outcome.
 - **Channel requirements:** the destination's resolution, caption files, transcript, chapters, and any disclosure of synthetic voice or AI assistance. Ask for the platform's current specification rather than assuming one.
 
 ## Ask well
