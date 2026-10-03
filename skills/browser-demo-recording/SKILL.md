@@ -13,6 +13,6 @@ Use this skill to capture an approved plan in a real browser. Record the product
 2. Use stable, visible browser locators and the app's actual controls. Type at a human-readable pace; do not rely on forced clicks or coordinate fallbacks.
 3. Keep a purposeful cursor path and continuous screen composition. Let viewers read a result before transitioning, and orient them before the next active action.
 4. Capture evidence for each required state change and assertion. Keep active actions synchronized to their approved spoken anchors.
-5. Save outputs only within the declared workspace, then run [demo-audit](../demo-audit/SKILL.md). Read [the capture contract](references/capture-contract.md) for preparation, pacing, and repair.
+5. Save outputs only within the declared workspace, then run [demo-audit](../demo-audit/SKILL.md). Read [the capture contract](references/capture-contract.md) for preparation, pacing, and repair. When you record many plans, rehearse each one silently first; see [demo-production-pipeline](../demo-production-pipeline/SKILL.md).
 
 By default, use the bundled synthetic example and captioned output. Paid credentials are not required for the default workflow. Voice providers and their terms are optional choices; never place credentials in a plan, prompt, command line, or generated artifact.

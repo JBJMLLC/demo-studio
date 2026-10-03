@@ -10,7 +10,8 @@ const expectedSkills = [
   "demo-narration",
   "demo-story-review",
   "browser-demo-recording",
-  "demo-audit"
+  "demo-audit",
+  "demo-production-pipeline"
 ];
 const issues = [];
 
