@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Make the media-clock drift limit frame-aware: the default `maxOffsetDriftMs` is now `max(50, 3 × frameIntervalMs + 10)` from the recording's measured frame interval (25 fps: 130 ms; 60 fps: 60 ms; unknown: 50 ms). Playwright records at 25 fps, so drift moves in 40 ms steps and the fixed 50 ms limit rejected healthy captures. Add `mediaClock` (`maxOffsetDriftMs`, `maxUncertaintyMs`) to `BrowserCaptureOptions`, and name the frame interval in the drift rejection message.
+- Add explicit legacy `mediaClock` limits (`maxOffsetDriftMs`, `maxUncertaintyMs`) to `BrowserCaptureOptions`, reject invalid limits before capture, and report measured frame spacing in drift failures. Keep default limits unchanged; a wider exploratory policy is not a synchronization fix.
 
 - Add the `demo-production-pipeline` skill: scout before scripting, silent rehearsal gated like the audit, one serialized voice and render queue, per-plan data resets, environment checks, and a producer/coordinator split. Fold the matching lessons into the recording, narration, and audit skills.
 

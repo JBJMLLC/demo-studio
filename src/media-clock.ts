@@ -57,8 +57,8 @@ export interface MediaClockDecodeOptions {
   /** Center/border luminance separation required for the marker fingerprint. */
   minPatternContrast?: number;
   /**
-   * Maximum accepted difference between per-pulse offset estimates. Defaults to
-   * `defaultMaxOffsetDriftMs(frameIntervalMs)`: `max(50, 3 * frameIntervalMs + 10)`.
+   * Maximum accepted difference between per-pulse offset estimates. The legacy
+   * default remains 50ms; decoded frame spacing is diagnostic, not extra slack.
    */
   maxOffsetDriftMs?: number;
   /** Maximum uncertainty accepted for a usable worker-to-video mapping. */
@@ -386,15 +386,12 @@ export function estimateFrameIntervalMs(frames: readonly Pick<DecodedMarkerFrame
   return deltas[Math.floor(deltas.length / 2)];
 }
 
-/**
- * Frame-aware drift limit. Measured offsets move in whole-frame steps, so a
- * fixed 50ms limit tolerates a one-frame slip at 25 fps. Allow three frames
- * plus 10ms, never below the 50ms floor (25 fps -> 130ms, 60 fps -> 60ms).
- */
-export function defaultMaxOffsetDriftMs(frameIntervalMs?: number | null): number {
-  const floor = DEFAULT_DECODE_OPTIONS.maxOffsetDriftMs;
-  if (frameIntervalMs === undefined || frameIntervalMs === null || !finiteNumber(frameIntervalMs) || frameIntervalMs <= 0) return floor;
-  return Math.max(floor, (3 * frameIntervalMs) + 10);
+/** Reject invalid limits before launching a browser or decoding a recording. */
+export function validateMediaClockLimits(options: Pick<MediaClockDecodeOptions, 'maxOffsetDriftMs' | 'maxUncertaintyMs'>): void {
+  for (const name of ['maxOffsetDriftMs', 'maxUncertaintyMs'] as const) {
+    const value = options[name];
+    if (value !== undefined && (!finiteNumber(value) || value < 0)) throw new Error(`Invalid media clock limit: ${name}`);
+  }
 }
 
 function failedCalibration(
@@ -443,6 +440,9 @@ export function calibrateVideo(
   events: readonly MarkerBracketEvent[],
   options: CalibrateVideoOptions = {},
 ): MediaClockCalibration {
+  try { validateMediaClockLimits(options); } catch (error) {
+    return failedCalibration(options.recordingId ?? 'unknown', error instanceof Error ? error.message : 'Invalid media clock limit');
+  }
   let recordingId: string;
   try {
     recordingId = chooseRecordingId(events, options.recordingId);
@@ -458,7 +458,6 @@ export function calibrateVideo(
     return failedCalibration(recordingId, error instanceof Error ? error.message : String(error), [], 0, merged.maxOffsetDriftMs);
   }
   const frameIntervalMs = estimateFrameIntervalMs(frames);
-  if (options.maxOffsetDriftMs === undefined) merged.maxOffsetDriftMs = defaultMaxOffsetDriftMs(frameIntervalMs);
   const frameNote = frameIntervalMs === null ? 'unknown frame interval' : `frame interval ${frameIntervalMs.toFixed(2)}ms`;
   const transitions = detectMediaClockTransitions(frames, merged);
   const rawSelectedEvents = events.filter((event) => (

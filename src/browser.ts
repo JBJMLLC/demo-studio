@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { relative, resolve } from 'node:path';
 import { chromium, type Page, type Locator, type Browser, type BrowserContext, type BrowserContextOptions } from 'playwright';
 import type { DemoPlan, CaptureResult, NarrationResult } from './schemas.js';
-import { buildMediaClockRuntimeSource, calibrateVideo, type MarkerBracketEvent, type MediaClockDecodeOptions } from './media-clock.js';
+import { buildMediaClockRuntimeSource, calibrateVideo, validateMediaClockLimits, type MarkerBracketEvent, type MediaClockDecodeOptions } from './media-clock.js';
 import { fileHash, jsonHash, mediaInfo, runBinary } from './media.js';
 
 type Point = { x: number; y: number };
@@ -20,7 +20,7 @@ export interface BrowserCaptureOptions {
   createSession?: CreateBrowserSession;
   /** Runs on the recorded page after the first navigation, before the first scene starts. */
   ready?: (page: Page) => Promise<void>;
-  /** Overrides media-clock calibration limits. The drift default is frame-aware: `max(50, 3 * frameIntervalMs + 10)`. */
+  /** Explicit legacy calibration policy; defaults are unchanged. Not a synchronization repair. */
   mediaClock?: Partial<Pick<MediaClockDecodeOptions, 'maxOffsetDriftMs' | 'maxUncertaintyMs'>>;
 }
 
@@ -95,6 +95,7 @@ async function center(locator: Locator): Promise<Point> {
 }
 
 export async function capture(plan: DemoPlan, workDir: string, narration: NarrationResult, options: BrowserCaptureOptions = {}): Promise<CaptureResult> {
+  validateMediaClockLimits(options.mediaClock ?? {});
   const createSession = options.createSession ?? isolatedContext;
   const directory = resolve(workDir, 'capture');
   await mkdir(directory, { recursive: true, mode: 0o700 });
