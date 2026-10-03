@@ -20,6 +20,15 @@ Use one primary purpose per scene and fill these fields:
 
 Scenes should form one connected explanation: orient the viewer, show a meaningful decision or change, interpret the result, and resolve the opening promise. A collection of correct but disconnected click descriptions is not a storyboard.
 
+## Teach the task
+
+- **One task per lesson.** If the story needs two outcomes, plan two lessons. A lesson running past about 6 minutes usually holds a second task.
+- **Name terms before using them.** When the task depends on two or three unfamiliar concepts, open with a short orienting scene that names them on screen before the first action.
+- **Show the likely mistake.** When viewers commonly go wrong at a step, say so in that scene's Say or Learn and show how to recognize the correct result.
+- **Make the ending a capability.** The final scene's Learn states what the viewer can now do. Do not end on a teaser for another lesson or open with a greeting; each lesson stands alone.
+- **The screen carries the lesson.** Every scene needs a visible change that makes sense with the sound off. A scene that is only explanation over an unchanging screen belongs in a shorter line, a callout, or a different scene.
+- **Point without distraction.** Direct attention with the action itself, a still cursor at the target, or a bordered callout that leaves the rest of the frame visible. Use zoom sparingly; some channels forbid it, so record the choice.
+
 ## Review the composition
 
 Check that the full frame contains the promised evidence before and after state changes. A resize must keep nearby evidence visible and legible. A share action must reach a real read-only destination when sharing is part of the claim. Identify needed viewport, responsive, empty-state, or accessibility checks before recording.

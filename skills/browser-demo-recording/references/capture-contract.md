@@ -10,6 +10,13 @@
 - Record a production build on a fixed address, not a hot-reloading dev server, and do not change the served checkout during a run. A reload mid-capture puts an error page in the video.
 - Type normally and let the app respond. If the expected result is absent, stop and repair the plan or app state; do not force a click, rewrite the page, or narrate around the failure.
 
+## Frame for the viewer's screen
+
+- The rendered video has the same pixel size as the plan's viewport; there is no high-DPI scaling. Course platforms expect at least 1280×720 at 16:9. A 1280×720 viewport keeps ordinary app text readable on a phone; use 1920×1080 only when the app's essential text stays legible after scaling a frame to phone size.
+- Keep the screen clean: dismiss cookie banners, autofill and password prompts, tours, chat widgets, and notifications that are not part of the proof. Do this through demo data or app settings, not by rewriting the page.
+- When captions are off, keep the proof away from the bottom edge, where player controls cover the frame. With captions on, the caption band sits below the recording and takes that space.
+- Choose one pointing style per series and record it in the plan: a cursor that moves with purpose and rests on the target, or optional zoom. Never circle or wiggle the cursor to point. Some channels forbid zoom, so check the brief before enabling it.
+
 ## Keep the interaction understandable
 
 Use direct, purposeful cursor travel and pause briefly at the target. Avoid teleports, slow creeping during narration, excessive zooms, and motion that exists only to fill time. Maintain a continuous cursor position across scene cuts when the camera context is unchanged.

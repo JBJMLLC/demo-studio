@@ -9,7 +9,7 @@ Use this skill to capture an approved plan in a real browser. Record the product
 
 ## Workflow
 
-1. Confirm the plan, target URL, viewport, browser, app readiness, and output workspace. Do not access a protected or customer system unless the user authorized that target and action.
+1. Confirm the plan, target URL, viewport, browser, app readiness, and output workspace. The viewport is the delivered resolution, so choose one whose text stays readable on a phone. Do not access a protected or customer system unless the user authorized that target and action.
 2. Use stable, visible browser locators and the app's actual controls. Type at a human-readable pace; do not rely on forced clicks or coordinate fallbacks.
 3. Keep a purposeful cursor path and continuous screen composition. Let viewers read a result before transitioning, and orient them before the next active action.
 4. Capture evidence for each required state change and assertion. Keep active actions synchronized to their approved spoken anchors.

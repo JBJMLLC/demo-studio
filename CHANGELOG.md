@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fold course-platform, accessibility, and video-learning guidance into the skills: teaching outcomes, terms, and channel requirements in the brief; one task per lesson and capability endings in the storyboard; named references and caption-friendly lines in narration; viewport legibility and pointing style in recording; and new audit [delivery checks](skills/demo-audit/references/delivery-checks.md) for phone-size legibility, a muted watch, loudness, caption reading limits, flashes, length, and sidecar deliverables. Sources are listed in [instructor guidelines](docs/instructor-guidelines.md).
+
 ## 0.1.3
 
 - Add an explicit browser-domain to video-PTS contract with recording/context/document/origin/reset identities, exact evidence references, both measured transition brackets, fixed-offset mapping, and conservative uncertainty. Reject drift or uncertainty beyond `ceil(1000 / fps)`; never infer a clock basis or adjust playback speed.
