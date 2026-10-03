@@ -10,12 +10,15 @@ Each skill has its own short entrypoint and can be used independently. A single 
 | [`demo-story-review`](../skills/demo-story-review/SKILL.md) | A person must approve exact scenes or wording before capture. | One-at-a-time review, a hash-bound working decision ledger, and explicit wording approval. |
 | [`browser-demo-recording`](../skills/browser-demo-recording/SKILL.md) | An approved plan is ready for real browser capture. | Human-paced browser actions, state evidence, and run-scoped outputs. |
 | [`demo-audit`](../skills/demo-audit/SKILL.md) | Captured media needs an independent quality verdict. | Screen/audio sampling, issue severity, and bounded repair. |
+| [`demo-production-pipeline`](../skills/demo-production-pipeline/SKILL.md) | Many demos, or several agents, share one machine and voice engine. | Page scouting, silent rehearsal gated like the audit, one voice/render queue, data resets, environment checks, and the producer/coordinator split. |
 
 ## A useful sequence
 
 ```text
 brief -> storyboard -> narration -> exact-word review -> browser capture -> independent audit
 ```
+
+At volume, `demo-production-pipeline` wraps the capture stages: scout the page before narration, rehearse silently before any voice is generated, then voice and render every passing plan in one queue.
 
 The story decision ledger is separate from the runtime's generated `review-packet.json` and reviewer-authored semantic `review.json`. Its receipt labels reviewer identity with `identityAssurance: caller-attested`; the local fingerprint check is not identity authentication. Arrange a genuinely independent human review outside the tool.
 

@@ -1,6 +1,6 @@
 # Local MCP server
 
-The marketplace plugin installs the six skills without starting an MCP process or requiring Node, Chromium, or media tools. Git checkouts do not contain compiled `dist/` files.
+The marketplace plugin installs the seven skills without starting an MCP process or requiring Node, Chromium, or media tools. Git checkouts do not contain compiled `dist/` files.
 
 For the full runtime, first complete the [source build](quickstart.md) or install the compiled release archive. Verify `node /path/to/built/demo-studio/dist/cli.js doctor`, then configure the CLI's `mcp` command as a local stdio process in your host. An npm installation places it at `node_modules/@jbjmllc/demo-studio/dist/cli.js` instead.
 

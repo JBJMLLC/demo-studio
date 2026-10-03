@@ -22,6 +22,10 @@ For each finding, include a stable ID, severity, timestamp or scene, observed ev
 
 Return `pass`, `revise`, or `inconclusive`. Missing evidence, an unreadable frame, inaudible speech, or a hash mismatch is inconclusive until the evidence is repaired. Never infer a pass from file existence, exit status, or a preview label.
 
+## Fail early in rehearsal
+
+Every timing and capture check here should also run in a cheap silent rehearsal before any voice is generated, with the same thresholds and a safety margin. If the audit fails an active action planned after the scene's narration ends, the rehearsal must fail it too, not warn. When an audit finding could have been caught without voice and the rehearsal missed it, fix the rehearsal as well as the plan. See [demo-production-pipeline](../../demo-production-pipeline/SKILL.md).
+
 ## Bounded repair and report
 
 Fix the earliest artifact responsible, regenerate only affected descendants, and audit the replacement against all open findings. Stop at the first pass or after six review rounds. If the sixth remains non-passing, report the unresolved findings and stop; do not conceal them with edits or optimistic wording.

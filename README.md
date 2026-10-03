@@ -2,7 +2,7 @@
 
 Story-first, local-first skills and tools for planning, recording, and auditing product walkthroughs. Start with the viewer's goal and product proof; capture the approved story in a real browser, then audit the actual screen and speech.
 
-The six skills are composable and work one at a time. The local toolchain supplies a captioned default, a synthetic browser fixture, and auditable run artifacts. Optional voice providers may require separate credentials and terms; the default does not.
+The seven skills are composable and work one at a time. The local toolchain supplies a captioned default, a synthetic browser fixture, and auditable run artifacts. Optional voice providers may require separate credentials and terms; the default does not.
 
 ## Example output
 
@@ -22,7 +22,7 @@ For a local project copy into Codex, choose a skill and omit `--global`:
 npx skills add JBJMLLC/demo-studio --skill demo-brief --agent codex --copy
 ```
 
-Replace `demo-brief` with `demo-storyboard`, `demo-narration`, `demo-story-review`, `browser-demo-recording`, or `demo-audit`. Project-local copies avoid overwriting user-global skills. Claude Code users can add this repository as a marketplace:
+Replace `demo-brief` with `demo-storyboard`, `demo-narration`, `demo-story-review`, `browser-demo-recording`, `demo-audit`, or `demo-production-pipeline`. Project-local copies avoid overwriting user-global skills. Claude Code users can add this repository as a marketplace:
 
 ```text
 /plugin marketplace add JBJMLLC/demo-studio
@@ -74,7 +74,7 @@ node dist/cli.js preview --mission "$DEMO_MISSION_ID" --work-dir .demo-studio/qu
 
 `generate` records the real browser interactions and includes media checks. The generated `review-packet.json` is evidence, not approval. An independent semantic reviewer must author a separate exact-hash `review.json`; no ready-to-submit review is generated. Submit that review before running `cleanup`, which closes the mission while preserving every run artifact. See the [review commands](docs/quickstart.md). The example adds a populated chart, widens it, then opens a read-only share view.
 
-For the project layout, exact commands, plan fields, privacy defaults, and repair steps, see the [documentation index](docs/index.md). The six skills and their boundaries are listed in [the skills guide](docs/skills.md).
+For the project layout, exact commands, plan fields, privacy defaults, and repair steps, see the [documentation index](docs/index.md). The seven skills and their boundaries are listed in [the skills guide](docs/skills.md).
 
 ## Development checks
 
