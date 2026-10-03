@@ -13,6 +13,26 @@ import { planZoom } from './zoom.js';
 import { writeJsonAtomic } from './store.js';
 import { fileHash, mediaInfo, runBinary, MediaIntegrityError, verifyFirstFrameIntegrity } from './media.js';
 
+type RemotionRenderApi = Pick<typeof import('@remotion/renderer'), 'ensureBrowser' | 'selectComposition' | 'renderMedia'>;
+type RemotionRenderRequest = Omit<Parameters<typeof renderMedia>[0], 'composition' | 'logLevel'> & { id: string };
+
+/**
+ * Remotion's default `info` logger writes to stdout, which is the MCP stdio
+ * JSON-RPC transport. Keep routine browser-download and render progress off
+ * that protocol channel; errors remain available on stderr.
+ */
+export async function renderWithProtocolSafeLogs(api: RemotionRenderApi, request: RemotionRenderRequest): Promise<void> {
+  await api.ensureBrowser({ logLevel: 'error' });
+  const composition = await api.selectComposition({
+    serveUrl: request.serveUrl,
+    id: request.id,
+    inputProps: request.inputProps,
+    logLevel: 'error',
+  });
+  const { id: _id, ...renderOptions } = request;
+  await api.renderMedia({ ...renderOptions, composition, logLevel: 'error' });
+}
+
 /** Only explicitly admitted media files are served. No directory browsing or path translation. */
 export async function serveMedia(files: string[]) {
   const allowed = new Map(files.map((path) => [`/${randomUUID()}${extname(path)}`, path]));
@@ -66,10 +86,17 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     const serveUrl = await bundle({ entryPoint: existsSync(nearby) ? nearby : source, outDir: resolve(directory, 'bundle'), enableCaching: false });
     // Render with Remotion's pinned Chrome Headless Shell, not Playwright's Chromium:
     // newer full Chromium builds return tiled, mis-scaled frame screenshots.
-    await ensureBrowser();
-    const composition = await selectComposition({ serveUrl, id: 'Demo', inputProps: props });
     const videoPath = resolve(directory, 'demo.mp4');
-    await renderMedia({ composition, serveUrl, codec: 'h264', outputLocation: videoPath, inputProps: props, concurrency: 2, overwrite: true, onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }) });
+    await renderWithProtocolSafeLogs({ ensureBrowser, selectComposition, renderMedia }, {
+      serveUrl,
+      id: 'Demo',
+      codec: 'h264',
+      outputLocation: videoPath,
+      inputProps: props,
+      concurrency: 2,
+      overwrite: true,
+      onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }),
+    });
     const info = await mediaInfo(videoPath);
     if (Math.abs(info.durationMs - durationInFrames / plan.fps * 1000) > 100 || info.width !== capture.width || info.height !== capture.height || info.hasAudio !== (audio.length > 0)) throw new Error('Final media does not match its composition');
     try {
