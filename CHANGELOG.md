@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Scope lesson-length guidance to course and tutorial lessons, keep product walkthroughs on their approved brief/channel duration, use a conservative sufficient WCAG flash rule, and distinguish the project's loudness target from conditional EBU guidance.
+- Add a `focus` action that zooms onto a target's bounding box without moving or clicking, for narration that describes an area of the screen (`selector`, `spokenAnchor`, `atMs`, optional `durationMs`). It holds for `durationMs` or until the next action and pans from neighbouring click zooms. Click, type, drag and focus actions accept `zoom: false` to skip their zoom or a number (1-3) for their own level; `presentation.zoom` remains the plan-level switch. Capture events record `target`, `holdMs` and `zoom`.
 - Fold course-platform, accessibility, and video-learning guidance into the skills: teaching outcomes, terms, and channel requirements in the brief; one task per lesson and capability endings in the storyboard; named references and caption-friendly lines in narration; viewport legibility and pointing style in recording; and new audit [delivery checks](skills/demo-audit/references/delivery-checks.md) for phone-size legibility, a muted watch, loudness, caption reading limits, flashes, length, and sidecar deliverables. Sources are listed in [instructor guidelines](docs/instructor-guidelines.md).
 
 ## 0.1.3
