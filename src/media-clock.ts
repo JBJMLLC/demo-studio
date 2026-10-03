@@ -743,3 +743,7 @@ export const mediaClockMarkerRuntimeSource = mediaClockCalibrationRuntimeSource;
 export function buildMediaClockRuntimeSource(): string {
   return mediaClockCalibrationRuntimeSource;
 }
+
+// Browser-domain mapping is separate from the legacy worker-domain mapper.
+export * from './browser-clock.js';
+export * from './marker-decoder.js';
