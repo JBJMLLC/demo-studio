@@ -102,6 +102,30 @@ async function boxOf(locator: Locator): Promise<{ x: number; y: number; width: n
   return box;
 }
 
+/** Where the locator's frame starts on the page: zero on the main frame, the iframe's content box inside a same-page iframe. */
+async function frameOffset(locator: Locator): Promise<Point> {
+  const handle = await locator.elementHandle({ timeout: 10_000 });
+  let frame = await handle.ownerFrame();
+  await handle.dispose();
+  const offset = { x: 0, y: 0 };
+  for (let parent = frame?.parentFrame(); frame && parent; frame = parent, parent = frame.parentFrame()) {
+    const element = await frame.frameElement();
+    const box = await element.evaluate((node: Element) => {
+      const rect = node.getBoundingClientRect(); const style = getComputedStyle(node);
+      return { x: rect.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft), y: rect.top + parseFloat(style.borderTopWidth) + parseFloat(style.paddingTop) };
+    });
+    await element.dispose();
+    offset.x += box.x; offset.y += box.y;
+  }
+  return offset;
+}
+
+/** True when the page point lands on the target. A target inside a same-page iframe is hit-tested in its frame's own coordinates. */
+async function hitsTarget(locator: Locator, point: Point): Promise<boolean> {
+  const offset = await frameOffset(locator);
+  return locator.evaluate((element, local) => { const hit = document.elementFromPoint(local.x, local.y); return hit === element || (hit !== null && element.contains(hit)); }, { x: point.x - offset.x, y: point.y - offset.y });
+}
+
 export async function capture(plan: DemoPlan, workDir: string, narration: NarrationResult, options: BrowserCaptureOptions = {}): Promise<CaptureResult> {
   validateMediaClockLimits(options.mediaClock ?? {});
   const createSession = options.createSession ?? isolatedContext;
@@ -121,11 +145,17 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
       node.innerHTML = cursor === 'circle'
         ? '<svg width="24" height="24"><circle cx="12" cy="12" r="9" fill="#6c5ce750" stroke="white" stroke-width="2"/></svg>'
         : '<svg width="24" height="30" viewBox="0 0 24 30"><path d="M2 1 L2 24 L8 18 L13 28 L17 26 L12 16 L22 16 Z" fill="#20233b" stroke="white" stroke-width="2"/></svg>';
+      // One visible cursor across same-page iframes. Mouse events go to the frame under the mouse,
+      // so each frame draws the cursor while the mouse is inside it and hides its copy when it leaves.
+      const nested = window !== window.top;
+      if (nested) node.style.display = 'none';
       document.documentElement.appendChild(node);
       document.addEventListener('mousemove', (event) => {
-        node.style.left = `${event.clientX}px`; node.style.top = `${event.clientY}px`;
-        try { sessionStorage.setItem('__demo_studio_pointer_position', JSON.stringify({ x: event.clientX, y: event.clientY })); } catch { /* storage can be disabled */ }
+        node.style.display = ''; node.style.left = `${event.clientX}px`; node.style.top = `${event.clientY}px`;
+        if (!nested) try { sessionStorage.setItem('__demo_studio_pointer_position', JSON.stringify({ x: event.clientX, y: event.clientY })); } catch { /* storage can be disabled */ }
       });
+      document.addEventListener('mouseover', (event) => { if ((event.target as Element | null)?.tagName === 'IFRAME') node.style.display = 'none'; }, true);
+      if (nested) document.addEventListener('mouseout', (event) => { if (!event.relatedTarget) node.style.display = 'none'; }, true);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach); else attach();
   }, { initial: pointer, cursor: plan.presentation.cursor });
@@ -170,12 +200,12 @@ export async function capture(plan: DemoPlan, workDir: string, narration: Narrat
           const readableHoverUntil = performance.now() + 140;
           // Validate while hovering, then measure the dispatch boundary—not
           // the earlier guard checks—as the action's observed start.
-          if (action.type === 'click' && (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer))) throw new Error('Click target is disabled or occluded');
+          if (action.type === 'click' && (!await locator!.isEnabled() || !await hitsTarget(locator!, pointer))) throw new Error('Click target is disabled or occluded');
           await sleep(Math.max(0, Math.max(readableHoverUntil, actionTime ?? readableHoverUntil) - performance.now()));
         }
         // A target can be replaced or covered during the authored hover. Check
         // again at dispatch, recording any guard latency rather than hiding it.
-        if (action.type === 'click' && (!await locator!.isEnabled() || !await locator!.evaluate((element, point) => { const hit = document.elementFromPoint(point.x, point.y); return hit === element || (hit !== null && element.contains(hit)); }, pointer))) throw new Error('Click target is disabled or occluded');
+        if (action.type === 'click' && (!await locator!.isEnabled() || !await hitsTarget(locator!, pointer))) throw new Error('Click target is disabled or occluded');
         const atMs = performance.now();
         switch (action.type) {
           case 'navigate': {

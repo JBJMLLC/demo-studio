@@ -79,6 +79,21 @@ describe('injectable browser session', () => {
     expect(outsideRequests).toBeGreaterThan(0);
   }, 60_000);
 
+  it('clicks a target inside a same-page iframe that is offset from the page origin', async () => {
+    const inside = await serve((request, response) => {
+      response.setHeader('Content-Type', 'text/html');
+      if (request.url === '/screen') response.end('<button id="go" style="margin:40px" onclick="this.textContent=\'Clicked\'">Go</button>');
+      else response.end('<body style="margin:0"><iframe id="phone" src="/screen" style="position:absolute;left:300px;top:90px;width:240px;height:200px;border:6px solid #222"></iframe></body>');
+    });
+    const plan = makePlan(inside, '#phone >> internal:control=enter-frame >> #go');
+    plan.presentation.cursor = 'pointer';
+    plan.scenes[0]!.actions = [{ id: 'press-go', type: 'click', selector: '#phone >> internal:control=enter-frame >> #go' }];
+    plan.scenes[0]!.assertions = [{ selector: '#phone >> internal:control=enter-frame >> text=Clicked', kind: 'visible' }];
+    plan.wordingApproval = { sha256: computeWordingApprovalHash(plan) };
+    const result = await capture(planSchema.parse(plan), workDir(), noNarration);
+    expect(result.assertions).toEqual([expect.objectContaining({ passed: true })]);
+  }, 60_000);
+
   it('waits for the ready hook on the recorded page before the first scene', async () => {
     const inside = await serve((_request, response) => { response.setHeader('Content-Type', 'text/html'); response.end('<main id="app">Loading</main>'); });
     const plan = makePlan(inside, 'main[data-ready="yes"]');
