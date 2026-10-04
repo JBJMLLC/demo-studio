@@ -2,10 +2,12 @@ import { bundle } from '@remotion/bundler';
 import { ensureBrowser, renderMedia, selectComposition } from '@remotion/renderer';
 import { createServer } from 'node:http';
 import { createReadStream, existsSync } from 'node:fs';
-import { mkdir, stat, writeFile } from 'node:fs/promises';
-import { extname, resolve } from 'node:path';
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { availableParallelism, homedir } from 'node:os';
+import { dirname, extname, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { CaptureResult, DemoPlan, NarrationResult, RenderResult } from './schemas.js';
 import type { VideoProps } from './composition.js';
 import { missionPath } from './store.js';
@@ -79,6 +81,74 @@ export function sampleTimes(durationMs: number, capture: Pick<CaptureResult, 'ev
   return [...points].sort((a, b) => a - b);
 }
 
+/**
+ * Remotion's frame concurrency: DEMO_STUDIO_RENDER_CONCURRENCY when it is a positive integer
+ * (capped at the core count), else half the cores, between 2 and 8. Each unit is one headless
+ * browser tab, so a machine running several renders at once should set it lower.
+ */
+export function renderConcurrency(env: NodeJS.ProcessEnv = process.env, cores = availableParallelism()): number {
+  const configured = Number(env.DEMO_STUDIO_RENDER_CONCURRENCY);
+  if (Number.isInteger(configured) && configured >= 1) return Math.min(configured, cores);
+  return Math.max(2, Math.min(8, Math.floor(cores / 2)));
+}
+
+/**
+ * Identifies a composition bundle: every module beside the entry point (the composition and
+ * what it imports) plus the bundler version. A rebuilt runtime gets a new key.
+ */
+export async function bundleCacheKey(entryPoint: string, bundlerVersion: string): Promise<string> {
+  const directory = dirname(entryPoint);
+  const hash = createHash('sha256').update(`bundler ${bundlerVersion}\nentry ${entryPoint.slice(directory.length)}\n`);
+  const names = (await readdir(directory)).filter((name) => /\.(js|ts|tsx)$/.test(name) && !name.endsWith('.d.ts')).sort();
+  for (const name of names) hash.update(`${name}\n`).update(await readFile(join(directory, name))).update('\n');
+  return hash.digest('hex').slice(0, 32);
+}
+
+const bundlerVersion = (): string => {
+  try { return (createRequire(import.meta.url)('@remotion/bundler/package.json') as { version: string }).version; }
+  catch { return 'unknown'; }
+};
+
+/**
+ * The Remotion bundle for `entryPoint`, built once per key into a cache shared by every render on
+ * the machine (DEMO_STUDIO_RENDER_CACHE_DIR, else ~/.cache/demo-studio/remotion-bundles), instead
+ * of a fresh Webpack build per render. Built into a private folder and renamed into place, so a
+ * concurrent render never serves a half-written bundle. The cache stays outside the installed
+ * runtime, which is checksum-verified and immutable.
+ */
+export async function cachedBundle(entryPoint: string, options: { cacheDirectory?: string; build?: (outDir: string) => Promise<unknown>; version?: string } = {}): Promise<string> {
+  const cacheDirectory = resolve(options.cacheDirectory ?? process.env.DEMO_STUDIO_RENDER_CACHE_DIR ?? join(homedir(), '.cache', 'demo-studio', 'remotion-bundles'));
+  const target = join(cacheDirectory, await bundleCacheKey(entryPoint, options.version ?? bundlerVersion()));
+  if (existsSync(join(target, 'index.html'))) return target;
+  await mkdir(cacheDirectory, { recursive: true, mode: 0o700 });
+  const building = `${target}.tmp-${randomUUID()}`;
+  const build = options.build ?? ((outDir: string) => bundle({ entryPoint, outDir, enableCaching: false }));
+  try {
+    await build(building);
+    await rename(building, target);
+  } catch (error) {
+    // Another render finished the same bundle first: use theirs.
+    if (!existsSync(join(target, 'index.html'))) throw error;
+  } finally {
+    await rm(building, { recursive: true, force: true });
+  }
+  return target;
+}
+
+/** Runs `task` over `items` with at most `limit` in flight, keeping results in order. */
+export async function mapLimited<T, R>(items: T[], limit: number, task: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await task(items[index], index);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+  return results;
+}
+
 export async function render(plan: DemoPlan, capture: CaptureResult, narration: NarrationResult, missionDir: string): Promise<RenderResult> {
   if (capture.recordings.length !== 1 || !capture.clock.verified) throw new Error('Render requires a single verified continuous recording');
   const directory = resolve(missionDir, 'render');
@@ -97,9 +167,9 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
     const nearby = fileURLToPath(new URL('./composition.js', import.meta.url));
     const source = fileURLToPath(new URL('./composition.tsx', import.meta.url));
     // The installed runtime is checksum-verified and immutable. Remotion's
-    // default Webpack cache is rooted beside its package.json, so disable that
-    // cache instead of allowing build output inside the verified package.
-    const serveUrl = await bundle({ entryPoint: existsSync(nearby) ? nearby : source, outDir: resolve(directory, 'bundle'), enableCaching: false });
+    // default Webpack cache is rooted beside its package.json, so it stays off;
+    // the finished bundle is cached outside the package instead (cachedBundle).
+    const serveUrl = await cachedBundle(existsSync(nearby) ? nearby : source);
     // Render with Remotion's pinned Chrome Headless Shell, not Playwright's Chromium:
     // newer full Chromium builds return tiled, mis-scaled frame screenshots.
     const videoPath = resolve(directory, 'demo.mp4');
@@ -109,7 +179,7 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
       codec: 'h264',
       outputLocation: videoPath,
       inputProps: props,
-      concurrency: 2,
+      concurrency: renderConcurrency(),
       overwrite: true,
       onProgress: ({ renderedFrames, encodedFrames }) => writeJsonAtomic(resolve(directory, 'progress.json'), { schemaVersion: 1, renderedFrames, encodedFrames, totalFrames: durationInFrames }),
     });
@@ -122,13 +192,13 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
       if (error instanceof MediaIntegrityError) writeJsonAtomic(resolve(directory, 'first-frame-integrity.json'), { schemaVersion: 1, pass: false, code: error.code, threshold: error.threshold, ...(error.score === undefined ? {} : { score: error.score }) });
       throw error;
     }
-    const frames: string[] = [];
     const samples = sampleTimes(info.durationMs, capture);
-    for (let index = 0; index < samples.length; index++) {
-      const path = resolve(directory, `frame-${String(index).padStart(3, '0')}.png`);
-      await runBinary('ffmpeg', ['-y', '-ss', String(samples[index] / 1000), '-i', videoPath, '-frames:v', '1', path]);
-      frames.push(`render/frame-${String(index).padStart(3, '0')}.png`);
-    }
+    // One short seek-and-grab per sample; they are independent, so several run at once.
+    const frames = await mapLimited(samples, Math.min(8, availableParallelism()), async (atMs, index) => {
+      const name = `frame-${String(index).padStart(3, '0')}.png`;
+      await runBinary('ffmpeg', ['-y', '-ss', String(atMs / 1000), '-i', videoPath, '-frames:v', '1', resolve(directory, name)]);
+      return `render/${name}`;
+    });
     const posterPath = 'render/poster.png';
     await runBinary('ffmpeg', ['-y', '-ss', String(Math.max(0, info.durationMs / 1000 - 1.5)), '-i', videoPath, '-frames:v', '1', resolve(missionDir, posterPath)]);
     const sha256 = await fileHash(videoPath);
