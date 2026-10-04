@@ -63,6 +63,22 @@ function captionChunks(text: string, startFrame: number, endFrame: number) {
   return Array.from({ length: count }, (_, index) => ({ text: words.slice(index * 14, (index + 1) * 14).join(' '), startFrame: Math.round(startFrame + (endFrame - startFrame) * index / count), endFrame: Math.round(startFrame + (endFrame - startFrame) * (index + 1) / count) })).filter((entry) => entry.text);
 }
 
+/**
+ * Times (ms) at which to sample review frames from the final video. Every time is at least 100 ms
+ * before the end: the container duration can run past the last video frame (the audio track may be a
+ * few ms longer), and ffmpeg writes no file for a seek at or past the last frame, which then fails
+ * the render's artifact check.
+ */
+export function sampleTimes(durationMs: number, capture: Pick<CaptureResult, 'events' | 'scenes'>): number[] {
+  const last = Math.max(0, durationMs - 100);
+  const clamp = (ms: number) => Math.min(Math.max(0, ms), last);
+  const points = new Set<number>([0, last]);
+  for (let ms = 0; ms < durationMs; ms += 2000) points.add(clamp(ms));
+  for (const event of capture.events) for (const delta of [-250, 0, 500]) points.add(clamp(event.atMs + delta));
+  for (const scene of capture.scenes) points.add(clamp(scene.endMs));
+  return [...points].sort((a, b) => a - b);
+}
+
 export async function render(plan: DemoPlan, capture: CaptureResult, narration: NarrationResult, missionDir: string): Promise<RenderResult> {
   if (capture.recordings.length !== 1 || !capture.clock.verified) throw new Error('Render requires a single verified continuous recording');
   const directory = resolve(missionDir, 'render');
@@ -106,12 +122,8 @@ export async function render(plan: DemoPlan, capture: CaptureResult, narration: 
       if (error instanceof MediaIntegrityError) writeJsonAtomic(resolve(directory, 'first-frame-integrity.json'), { schemaVersion: 1, pass: false, code: error.code, threshold: error.threshold, ...(error.score === undefined ? {} : { score: error.score }) });
       throw error;
     }
-    const points = new Set<number>([0, Math.max(0, info.durationMs - 100)]);
-    for (let ms = 0; ms < info.durationMs; ms += 2000) points.add(ms);
-    for (const event of capture.events) for (const delta of [-250, 0, 500]) points.add(Math.min(Math.max(0, event.atMs + delta), info.durationMs - 100));
-    for (const scene of capture.scenes) points.add(Math.min(scene.endMs, info.durationMs - 100));
     const frames: string[] = [];
-    const samples = [...points].sort((a, b) => a - b);
+    const samples = sampleTimes(info.durationMs, capture);
     for (let index = 0; index < samples.length; index++) {
       const path = resolve(directory, `frame-${String(index).padStart(3, '0')}.png`);
       await runBinary('ffmpeg', ['-y', '-ss', String(samples[index] / 1000), '-i', videoPath, '-frames:v', '1', path]);
