@@ -37,6 +37,8 @@ Use stable accessible locators or explicit test IDs. Do not target a decorative 
 
 ## Assertions
 
+To act inside an iframe on the page (for example a page that frames another app in a device mockup), enter the frame in the selector: `#screen >> internal:control=enter-frame >> button:has-text("Submit")`. Clicks, typing and assertions work there; the cursor follows the mouse into and out of the frame. The iframe must not be scaled with a CSS transform, and the page itself must stay on the plan's origin.
+
 Assertions use a selector, a `kind`, and, for text checks, a `value`:
 
 - `visible` — the expected product element is visible.
